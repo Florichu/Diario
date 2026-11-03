@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#312e81" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
+  <!-- Subtle inner calendar outline -->
+  <rect x="76" y="80" width="360" height="352" rx="64" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-width="8" stroke-opacity="0.3"/>
+  <line x1="76" y1="168" x2="436" y2="168" stroke="#ffffff" stroke-width="8" stroke-opacity="0.3"/>
+  <circle cx="160" cy="124" r="16" fill="#ffffff"/>
+  <circle cx="352" cy="124" r="16" fill="#ffffff"/>
+  <!-- Vibrant Checkmark Badge in Center -->
+  <circle cx="256" cy="296" r="110" fill="#10b981" filter="url(#shadow)"/>
+  <path d="M200 296 L238 334 L318 254" fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

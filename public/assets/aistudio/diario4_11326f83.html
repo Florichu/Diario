@@ -1,0 +1,3319 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Control de Actividad Diaria (Offline)</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            --blue: #2563eb;
+            --blue-light: #dbeafe;
+            --emerald: #10b981;
+            --emerald-dark: #047857;
+            --emerald-light: #d1fae5;
+            --rose: #f43f5e;
+            --rose-dark: #be123c;
+            --rose-light: #ffe4e6;
+            --amber: #f59e0b;
+            --amber-dark: #b45309;
+            --amber-light: #fef3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+        }
+
+        /* Contenedores y estructura */
+        .container {
+            max-width: 1024px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+
+        .header-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+            gap: 1rem;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-icon {
+            width: 2.6rem;
+            height: 2.6rem;
+            border-radius: 0.75rem;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+        }
+
+        .brand h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .brand p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Selector de fecha */
+        .date-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: #f1f5f9;
+            padding: 0.35rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+        }
+
+        .btn-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: var(--surface);
+        }
+
+        .date-input {
+            border: none;
+            background: transparent;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            padding: 0.2rem 0.4rem;
+            font-family: inherit;
+        }
+
+        .date-input:focus {
+            outline: none;
+        }
+
+        .btn-today {
+            font-size: 0.75rem;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: none;
+            font-weight: 600;
+            padding: 0.35rem 0.65rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: opacity 0.2s, background 0.2s;
+        }
+
+        .btn-today:hover {
+            background: #c7d2fe;
+        }
+
+        .btn-today.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Pestañas */
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.75rem;
+        }
+
+        .tab-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 0.6rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .tab-btn:hover {
+            background: #f1f5f9;
+            color: var(--text);
+        }
+
+        .tab-btn.tab-active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+
+        .badge {
+            background: #e2e8f0;
+            color: #334155;
+            font-size: 0.75rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+        }
+
+        .tab-btn.tab-active .badge {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
+
+        /* Cuerpo Principal */
+        main {
+            flex: 1;
+            padding: 1.5rem 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .space-y > * + * {
+            margin-top: 1.5rem;
+        }
+
+        /* Banner Superior */
+        .hero-banner {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 1rem;
+            padding: 1.25rem 1.5rem;
+            color: white;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.2rem 0.65rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.2);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .hero-banner h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .hero-banner p {
+            font-size: 0.875rem;
+            color: #e0e7ff;
+        }
+
+        /* Tarjeta del Animal del Día en el Banner */
+        .animal-day-card {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.65rem 0.9rem;
+            border-radius: 0.9rem;
+            backdrop-filter: blur(6px);
+            max-width: 340px;
+        }
+
+        .animal-photo-wrap {
+            width: 4.5rem;
+            height: 4.5rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .animal-photo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .animal-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .animal-tag {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 800;
+            color: #fde68a;
+            display: block;
+        }
+
+        .animal-name {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: white;
+            line-height: 1.2;
+        }
+
+        .animal-fact {
+            font-size: 0.7rem;
+            color: #e0e7ff;
+            line-height: 1.25;
+            margin-top: 0.15rem;
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--primary);
+            border: none;
+            font-weight: 700;
+            padding: 0.65rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-family: inherit;
+        }
+
+        .btn-white:hover {
+            background: #f8fafc;
+        }
+
+        /* Rejillas y Tarjetas */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .card-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .cat-icon {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .cat-blue { background: var(--blue-light); color: var(--blue); }
+        .cat-emerald { background: var(--emerald-light); color: var(--emerald-dark); }
+
+        .link-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .link-btn:hover {
+            text-decoration: underline;
+        }
+
+        /* Items de Checklist */
+        .list-space > * + * {
+            margin-top: 0.75rem;
+        }
+
+        .task-item {
+            padding: 0.85rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .task-item.status-si {
+            background: #ecfdf5;
+            border-color: #6ee7b7;
+        }
+
+        .task-item.status-no {
+            background: #fff1f2;
+            border-color: #fda4af;
+        }
+
+        .task-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .task-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1e293b;
+            word-wrap: break-word;
+        }
+
+        .task-time {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            display: inline-block;
+            margin-top: 0.15rem;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.4rem;
+            flex-shrink: 0;
+        }
+
+        .btn-status {
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: white;
+            color: #475569;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .btn-status.yes-active {
+            background: var(--emerald);
+            color: white;
+            border-color: var(--emerald);
+        }
+
+        .btn-status.no-active {
+            background: var(--rose);
+            color: white;
+            border-color: var(--rose);
+        }
+
+        /* Estadísticas y Resumen */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .stat-box {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            background: #f8fafc;
+        }
+
+        .stat-box.emerald { background: #ecfdf5; border-color: #a7f3d0; color: var(--emerald-dark); }
+        .stat-box.rose { background: #fff1f2; border-color: #fecdd3; color: var(--rose-dark); }
+        .stat-box.amber { background: #fffbeb; border-color: #fde68a; color: var(--amber-dark); }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: baseline;
+            gap: 0.4rem;
+        }
+
+        .stat-pct {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Gráfica y Barras */
+        .summary-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        @media (min-width: 768px) {
+            .summary-layout {
+                grid-template-columns: 5fr 7fr;
+            }
+        }
+
+        .chart-box {
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            border-radius: 1rem;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .donut-container {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .donut-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .donut-segment {
+            transition: stroke-dasharray 0.5s ease, stroke-dashoffset 0.5s ease;
+        }
+
+        .donut-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .donut-pct {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .donut-sub {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .dot {
+            width: 0.65rem;
+            height: 0.65rem;
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 0.75rem;
+            background: #f1f5f9;
+            border-radius: 999px;
+            overflow: hidden;
+            display: flex;
+            margin-top: 0.35rem;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.4s ease;
+        }
+
+        .summary-lists {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .summary-lists {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .summary-card {
+            border-radius: 0.75rem;
+            padding: 0.85rem;
+            font-size: 0.75rem;
+        }
+
+        .summary-card h5 {
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-card ul {
+            list-style: none;
+            max-height: 9rem;
+            overflow-y: auto;
+        }
+
+        .summary-card li + li {
+            margin-top: 0.35rem;
+        }
+
+        /* Formularios CRUD */
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        @media (min-width: 640px) {
+            .form-row {
+                flex-direction: row;
+            }
+        }
+
+        .input-text, .input-time {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            padding: 0.65rem 0.85rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+        }
+
+        .input-text {
+            flex: 1;
+        }
+
+        .input-text:focus, .input-time:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.65rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-small {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: #f8fafc;
+            color: var(--text);
+            font-family: inherit;
+        }
+
+        .btn-small:hover {
+            background: #e2e8f0;
+        }
+
+        /* Calendario */
+        .cal-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.4rem;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.4rem;
+        }
+
+        .cal-cell {
+            height: 5.2rem;
+            padding: 0.4rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            transition: border-color 0.15s;
+        }
+
+        .cal-cell:hover {
+            border-color: var(--primary);
+        }
+
+        .cal-cell.selected {
+            border: 2px solid var(--primary);
+            background: #eef2ff;
+        }
+
+        .cal-day-num {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cal-day-num.today {
+            background: var(--primary);
+            color: white;
+        }
+
+        .cal-pct-badge {
+            display: block;
+            width: 100%;
+            text-align: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.1rem 0.2rem;
+            border-radius: 0.35rem;
+        }
+
+        /* Toast y Modal */
+        .toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 50;
+            background: #0f172a;
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(15, 23, 42, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 1rem;
+            max-width: 24rem;
+            width: 100%;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+            background: white;
+        }
+
+        .backup-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Notificación Flotante -->
+    <div id="toast" class="toast hidden">
+        <span id="toast-icon">✅</span>
+        <span id="toast-msg">Acción completada</span>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div id="confirm-modal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
+            <h3 id="modal-title" style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem;">¿Eliminar actividad?</h3>
+            <p id="modal-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Esta acción quitará la actividad de tu lista.</p>
+            <div style="display: flex; gap: 0.75rem;">
+                <button onclick="closeModal()" class="btn-small" style="flex: 1; padding: 0.6rem;">Cancelar</button>
+                <button id="modal-confirm-btn" class="btn-primary" style="flex: 1; background: var(--rose);">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Encabezado -->
+    <header>
+        <div class="container">
+            <div class="header-top">
+                <div class="brand">
+                    <div class="brand-icon">✓</div>
+                    <div>
+                        <h1>Control Diario <span style="font-size: 0.7rem; background: #dcfce7; color: #15803d; padding: 0.15rem 0.5rem; border-radius: 999px; vertical-align: middle;">100% Offline</span></h1>
+                        <p id="current-date-header">Cargando fecha...</p>
+                    </div>
+                </div>
+
+                <!-- Selector de Fecha -->
+                <div class="date-controls">
+                    <button onclick="changeSelectedDate(-1)" class="btn-icon" title="Día anterior">&#10094;</button>
+                    <span>📅</span>
+                    <input type="date" id="active-date-picker" onchange="onDatePickerChange(this.value)" class="date-input">
+                    <button onclick="changeSelectedDate(1)" class="btn-icon" title="Día siguiente">&#10095;</button>
+                    <button onclick="goToToday()" id="btn-today" class="btn-today">Hoy</button>
+                </div>
+            </div>
+
+            <!-- Pestañas de Navegación -->
+            <nav class="tabs-nav">
+                <button onclick="switchTab('cumplir')" id="tab-btn-cumplir" class="tab-btn tab-active">
+                    <span>📋 Cumplir Actividades</span>
+                </button>
+                <button onclick="switchTab('escolares')" id="tab-btn-escolares" class="tab-btn">
+                    <span>🎓 Escolares</span>
+                    <span id="badge-escolares" class="badge">0</span>
+                </button>
+                <button onclick="switchTab('cotidianas')" id="tab-btn-cotidianas" class="tab-btn">
+                    <span>🏠 Cotidianas</span>
+                    <span id="badge-cotidianas" class="badge">0</span>
+                </button>
+                <button onclick="switchTab('pendientes')" id="tab-btn-pendientes" class="tab-btn">
+                    <span>📌 Acciones Pendientes</span>
+                    <span id="badge-pendientes" class="badge" style="background: var(--amber-light); color: var(--amber-dark);">0</span>
+                </button>
+                <button onclick="switchTab('compras')" id="tab-btn-compras" class="tab-btn">
+                    <span>🛒 Lista de Compras</span>
+                    <span id="badge-compras" class="badge" style="background: #dcfce7; color: #15803d;">0</span>
+                </button>
+                <button onclick="switchTab('recursos')" id="tab-btn-recursos" class="tab-btn" style="color: #b45309;">
+                    <span>📚 Archivos y Vídeos</span>
+                    <span id="badge-recursos" class="badge" style="background: #fef3c7; color: #b45309;">0</span>
+                </button>
+                <button onclick="switchTab('calendario')" id="tab-btn-calendario" class="tab-btn">
+                    <span>🗓️ Calendario</span>
+                </button>
+                <button onclick="switchTab('gemini')" id="tab-btn-gemini" class="tab-btn" style="color: #6d28d9;">
+                    <span>✨ Asistente Gemini</span>
+                </button>
+                <button onclick="switchTab('sincronizar')" id="tab-btn-sincronizar" class="tab-btn" style="color: #0369a1;">
+                    <span>🔄 Sincronizar</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="container">
+
+        <!-- PESTAÑA 1: CUMPLIR ACTIVIDADES -->
+        <section id="tab-cumplir" class="space-y">
+            <div class="hero-banner">
+                <div style="flex: 1; min-width: 240px;">
+                    <span class="hero-badge" id="selected-day-badge">Registro Independiente del Día</span>
+                    <h2 id="selected-day-title">Hoy</h2>
+                    <p>Las actividades de este día son <strong>exclusivas de esta fecha</strong>. Marca con <strong>SÍ</strong> o <strong>NO</strong> o añádelas aquí mismo.</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem;">
+                        <button onclick="copyFromPreviousDay()" class="btn-white" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4);" title="Traer las tareas del día anterior a este día">
+                            <span>📋 Copiar tareas de ayer</span>
+                        </button>
+                        <button onclick="scrollToSummary()" class="btn-white">
+                            <span>📊 Ver Gráfica</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cuadro del Animal del Día -->
+                <div class="animal-day-card">
+                    <div class="animal-photo-wrap" id="animal-photo-container" title="Animal exclusivo de esta fecha">
+                        <img id="animal-day-img" src="" alt="Animal del día">
+                    </div>
+                    <div class="animal-info">
+                        <span class="animal-tag">🐾 Animal de este día</span>
+                        <div class="animal-name" id="animal-day-name">Cargando...</div>
+                        <div class="animal-fact" id="animal-day-fact">...</div>
+                        <div style="display: flex; gap: 0.35rem; margin-top: 0.35rem;">
+                            <button type="button" onclick="cycleDayAnimal()" class="btn-small" style="padding: 0.15rem 0.45rem; font-size: 0.65rem; background: rgba(255,255,255,0.2); color: white; border-color: rgba(255,255,255,0.35);" title="Ver otro animal para este día">🔄 Cambiar</button>
+                            <label class="btn-small" style="padding: 0.15rem 0.45rem; font-size: 0.65rem; background: rgba(255,255,255,0.2); color: white; border-color: rgba(255,255,255,0.35); cursor: pointer;" title="Poner tu propia foto de un animal para este día">
+                                📷 Subir foto
+                                <input type="file" accept="image/*" onchange="uploadCustomAnimalPhoto(event)" style="display: none;">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columnas Escolares y Cotidianas -->
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <div class="cat-icon cat-blue">🎓</div>
+                            <div>
+                                <h3 style="font-size: 1rem; font-weight: 700;">Escolares de este día</h3>
+                                <p style="font-size: 0.75rem; color: var(--text-muted);">Exclusivas de la fecha seleccionada</p>
+                            </div>
+                        </div>
+                        <button onclick="switchTab('escolares')" class="link-btn">✏️ Gestionar / Borrar</button>
+                    </div>
+                    <form onsubmit="handleQuickAddActivity(event, 'escolar')" style="margin-top: 0; margin-bottom: 1rem;">
+                        <div class="form-row" style="margin-top: 0;">
+                            <input type="text" id="quick-escolar-title" required placeholder="+ Nueva escolar solo para este día..." class="input-text" style="padding: 0.45rem 0.75rem; font-size: 0.8rem;">
+                            <input type="time" id="quick-escolar-time" class="input-time" style="padding: 0.45rem; font-size: 0.8rem;">
+                            <button type="submit" class="btn-primary" style="background: var(--blue); padding: 0.45rem 0.85rem; font-size: 0.8rem;">Añadir</button>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem;">
+                            <input type="text" id="quick-escolar-url" placeholder="🔗 URL opcional (YouTube, web, app...)" class="input-text" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;">
+                            <label class="btn-small" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; padding: 0.35rem 0.65rem;">
+                                📎 <span id="quick-escolar-file-label">Adjuntar PDF/DOCX/Vídeo</span>
+                                <input type="file" id="quick-escolar-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,video/*,image/*" onchange="updateFileLabel('quick-escolar-file', 'quick-escolar-file-label')" style="display: none;">
+                            </label>
+                        </div>
+                    </form>
+                    <div id="checklist-escolares" class="list-space"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <div class="cat-icon cat-emerald">🏠</div>
+                            <div>
+                                <h3 style="font-size: 1rem; font-weight: 700;">Cotidianas de este día</h3>
+                                <p style="font-size: 0.75rem; color: var(--text-muted);">Exclusivas de la fecha seleccionada</p>
+                            </div>
+                        </div>
+                        <button onclick="switchTab('cotidianas')" class="link-btn">✏️ Gestionar / Borrar</button>
+                    </div>
+                    <form onsubmit="handleQuickAddActivity(event, 'cotidiana')" style="margin-top: 0; margin-bottom: 1rem;">
+                        <div class="form-row" style="margin-top: 0;">
+                            <input type="text" id="quick-cotidiana-title" required placeholder="+ Nueva cotidiana solo para este día..." class="input-text" style="padding: 0.45rem 0.75rem; font-size: 0.8rem;">
+                            <input type="time" id="quick-cotidiana-time" class="input-time" style="padding: 0.45rem; font-size: 0.8rem;">
+                            <button type="submit" class="btn-primary" style="background: var(--emerald-dark); padding: 0.45rem 0.85rem; font-size: 0.8rem;">Añadir</button>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem;">
+                            <input type="text" id="quick-cotidiana-url" placeholder="🔗 URL opcional (YouTube, web, app...)" class="input-text" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;">
+                            <label class="btn-small" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; padding: 0.35rem 0.65rem;">
+                                📎 <span id="quick-cotidiana-file-label">Adjuntar PDF/DOCX/Vídeo</span>
+                                <input type="file" id="quick-cotidiana-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,video/*,image/*" onchange="updateFileLabel('quick-cotidiana-file', 'quick-cotidiana-file-label')" style="display: none;">
+                            </label>
+                        </div>
+                    </form>
+                    <div id="checklist-cotidianas" class="list-space"></div>
+                </div>
+            </div>
+
+            <!-- Resumen y Gráfica -->
+            <div id="resumen-dia-section" class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700;">📊 Resumen y Gráfica del Día</h3>
+                        <p style="font-size: 0.75rem; color: var(--text-muted);">Resultado en tanto por ciento (%) de actividades cumplidas e incumplidas</p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="markAllDay('si')" class="btn-small" style="background: #ecfdf5; color: var(--emerald-dark); border-color: #a7f3d0;">Marcar todo SÍ</button>
+                        <button onclick="resetDay()" class="btn-small">Reiniciar Día</button>
+                    </div>
+                </div>
+
+                <!-- Contadores -->
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label" style="color: var(--text-muted);">Total Actividades</span>
+                        <div class="stat-val" id="stat-total">0</div>
+                    </div>
+                    <div class="stat-box emerald">
+                        <span class="stat-label">✓ Cumplidas (SÍ)</span>
+                        <div class="stat-val">
+                            <span id="stat-yes">0</span>
+                            <span class="stat-pct" id="stat-yes-pct">(0%)</span>
+                        </div>
+                    </div>
+                    <div class="stat-box rose">
+                        <span class="stat-label">✕ Incumplidas (NO)</span>
+                        <div class="stat-val">
+                            <span id="stat-no">0</span>
+                            <span class="stat-pct" id="stat-no-pct">(0%)</span>
+                        </div>
+                    </div>
+                    <div class="stat-box amber">
+                        <span class="stat-label">⏳ Sin responder</span>
+                        <div class="stat-val">
+                            <span id="stat-pending">0</span>
+                            <span class="stat-pct" id="stat-pending-pct">(0%)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfica Circular y Desglose -->
+                <div class="summary-layout">
+                    <div class="chart-box">
+                        <h4 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.75rem;">Gráfica de Resultado (%)</h4>
+                        <div class="donut-container">
+                            <svg class="donut-svg" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="15.9155" fill="transparent" stroke="#e2e8f0" stroke-width="3.8"></circle>
+                                <circle id="donut-no" class="donut-segment" cx="18" cy="18" r="15.9155" fill="transparent" stroke="#f43f5e" stroke-width="3.8" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+                                <circle id="donut-yes" class="donut-segment" cx="18" cy="18" r="15.9155" fill="transparent" stroke="#10b981" stroke-width="3.8" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+                            </svg>
+                            <div class="donut-center">
+                                <span class="donut-pct" id="donut-center-pct">0%</span>
+                                <span class="donut-sub">Cumplido</span>
+                            </div>
+                        </div>
+                        <div class="legend">
+                            <div class="legend-item"><span class="dot" style="background: var(--emerald);"></span> SÍ (<span id="legend-yes">0%</span>)</div>
+                            <div class="legend-item"><span class="dot" style="background: var(--rose);"></span> NO (<span id="legend-no">0%</span>)</div>
+                            <div class="legend-item"><span class="dot" style="background: #cbd5e1;"></span> Pend. (<span id="legend-pending">0%</span>)</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700;">
+                                <span style="color: var(--blue);">🎓 Escolares Cumplidas</span>
+                                <span id="bar-escolares-label">0% (0/0)</span>
+                            </div>
+                            <div class="progress-track">
+                                <div id="bar-escolares-yes" class="bar-fill" style="background: var(--blue); width: 0%;"></div>
+                                <div id="bar-escolares-no" class="bar-fill" style="background: var(--rose); width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700;">
+                                <span style="color: var(--emerald-dark);">🏠 Cotidianas Cumplidas</span>
+                                <span id="bar-cotidianas-label">0% (0/0)</span>
+                            </div>
+                            <div class="progress-track">
+                                <div id="bar-cotidianas-yes" class="bar-fill" style="background: var(--emerald); width: 0%;"></div>
+                                <div id="bar-cotidianas-no" class="bar-fill" style="background: var(--rose); width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="summary-lists">
+                            <div class="summary-card" style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;">
+                                <h5>✓ Actividades Cumplidas</h5>
+                                <ul id="summary-list-yes"></ul>
+                            </div>
+                            <div class="summary-card" style="background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239;">
+                                <h5>✕ Actividades Incumplidas</h5>
+                                <ul id="summary-list-no"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 2: ESCOLARES -->
+        <section id="tab-escolares" class="space-y hidden">
+            <div class="card">
+                <div class="card-title-group" style="margin-bottom: 0.75rem;">
+                    <div class="cat-icon cat-blue">🎓</div>
+                    <div>
+                        <h2 style="font-size: 1.1rem; font-weight: 700;">Actividades Escolares del Día (<span id="esc-tab-date-label">Hoy</span>)</h2>
+                        <p style="font-size: 0.75rem; color: var(--text-muted);">Puedes adjuntar un archivo PDF, Word (.docx), vídeo o enlace de YouTube a la actividad.</p>
+                    </div>
+                </div>
+                <form onsubmit="handleAddActivity(event, 'escolar')">
+                    <div class="form-row">
+                        <input type="text" id="input-escolar-title" required placeholder="Ej: Estudiar Tema 3, Hacer resumen..." class="input-text">
+                        <input type="time" id="input-escolar-time" class="input-time" title="Hora opcional">
+                        <button type="submit" class="btn-primary" style="background: var(--blue);">+ Añadir a este Día</button>
+                    </div>
+                    <div class="form-row" style="margin-top: 0.5rem;">
+                        <input type="text" id="input-escolar-url" placeholder="🔗 Pegar URL de YouTube, página web o enlace a App (opcional)..." class="input-text" style="font-size: 0.8rem;">
+                        <label class="btn-small" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.55rem 0.85rem;">
+                            📎 <span id="input-escolar-file-label">Subir PDF / DOCX / Vídeo del PC o Móvil</span>
+                            <input type="file" id="input-escolar-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,video/*,image/*" onchange="updateFileLabel('input-escolar-file', 'input-escolar-file-label')" style="display: none;">
+                        </label>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem;">Listado Escolar exclusivo de esta fecha</h3>
+                <div id="crud-list-escolares" class="list-space"></div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 3: COTIDIANAS -->
+        <section id="tab-cotidianas" class="space-y hidden">
+            <div class="card">
+                <div class="card-title-group" style="margin-bottom: 0.75rem;">
+                    <div class="cat-icon cat-emerald">🏠</div>
+                    <div>
+                        <h2 style="font-size: 1.1rem; font-weight: 700;">Actividades Cotidianas del Día (<span id="cot-tab-date-label">Hoy</span>)</h2>
+                        <p style="font-size: 0.75rem; color: var(--text-muted);">Puedes adjuntar una rutina en vídeo de YouTube, un PDF o documento desde tu dispositivo.</p>
+                    </div>
+                </div>
+                <form onsubmit="handleAddActivity(event, 'cotidiana')">
+                    <div class="form-row">
+                        <input type="text" id="input-cotidiana-title" required placeholder="Ej: Rutina de ejercicio, Receta, Ordenar..." class="input-text">
+                        <input type="time" id="input-cotidiana-time" class="input-time" title="Hora opcional">
+                        <button type="submit" class="btn-primary" style="background: var(--emerald-dark);">+ Añadir a este Día</button>
+                    </div>
+                    <div class="form-row" style="margin-top: 0.5rem;">
+                        <input type="text" id="input-cotidiana-url" placeholder="🔗 Pegar URL de YouTube, página web o enlace a App (opcional)..." class="input-text" style="font-size: 0.8rem;">
+                        <label class="btn-small" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.55rem 0.85rem;">
+                            📎 <span id="input-cotidiana-file-label">Subir PDF / DOCX / Vídeo del PC o Móvil</span>
+                            <input type="file" id="input-cotidiana-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,video/*,image/*" onchange="updateFileLabel('input-cotidiana-file', 'input-cotidiana-file-label')" style="display: none;">
+                        </label>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem;">Listado Cotidiano exclusivo de esta fecha</h3>
+                <div id="crud-list-cotidianas" class="list-space"></div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 4: ACCIONES PENDIENTES -->
+        <section id="tab-pendientes" class="space-y hidden">
+            <div class="card">
+                <div class="card-header" style="margin-bottom: 0.5rem; border-bottom: none; padding-bottom: 0;">
+                    <div class="card-title-group">
+                        <div class="cat-icon" style="background: var(--amber-light); color: var(--amber-dark);">📌</div>
+                        <div>
+                            <h2 style="font-size: 1.1rem; font-weight: 700;">Acciones Pendientes Surgidas</h2>
+                            <p style="font-size: 0.75rem; color: var(--text-muted);">Anota tareas puntuales o imprevistos. El contador bajará al activar la casilla de realizada.</p>
+                        </div>
+                    </div>
+                    <div style="background: var(--amber-light); color: var(--amber-dark); padding: 0.4rem 0.85rem; border-radius: 0.75rem; font-size: 0.85rem; font-weight: 700;">
+                        Pendientes por hacer: <span id="pending-counter-display">0</span>
+                    </div>
+                </div>
+                <form onsubmit="handleAddPending(event)" class="form-row">
+                    <input type="text" id="input-pending-title" required placeholder="Ej: Comprar cartulina, Llamar al médico, Entregar autorización..." class="input-text">
+                    <button type="submit" class="btn-primary" style="background: var(--amber-dark);">+ Añadir Pendiente</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Lista de Cosas Pendientes</h3>
+                    <button onclick="clearCompletedPendings()" class="btn-small" style="font-size: 0.7rem;">🧹 Limpiar ya realizadas</button>
+                </div>
+                <div id="list-pendientes" class="list-space"></div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 4B: LISTA DE COMPRAS -->
+        <section id="tab-compras" class="space-y hidden">
+            <div class="card">
+                <div class="card-header" style="margin-bottom: 0.5rem; border-bottom: none; padding-bottom: 0;">
+                    <div class="card-title-group">
+                        <div class="cat-icon" style="background: #dcfce7; color: #15803d;">🛒</div>
+                        <div>
+                            <h2 style="font-size: 1.1rem; font-weight: 700;">Lista de Compras Pendientes</h2>
+                            <p style="font-size: 0.75rem; color: var(--text-muted);">Apunta lo que necesites comprar. Marca la casilla cuando ya lo hayas comprado para descontarlo.</p>
+                        </div>
+                    </div>
+                    <div style="background: #dcfce7; color: #15803d; padding: 0.4rem 0.85rem; border-radius: 0.75rem; font-size: 0.85rem; font-weight: 700;">
+                        Por comprar: <span id="shopping-counter-display">0</span>
+                    </div>
+                </div>
+                <form onsubmit="handleAddShopping(event)" class="form-row">
+                    <input type="text" id="input-shopping-title" required placeholder="Ej: Leche, Cuadernos, Pan, Detergente..." class="input-text">
+                    <input type="text" id="input-shopping-qty" placeholder="Cantidad / Nota (opcional)" class="input-time" style="min-width: 170px;">
+                    <button type="submit" class="btn-primary" style="background: #15803d;">+ Añadir Compra</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Artículos en tu Lista de Compras</h3>
+                    <button onclick="clearCompletedShopping()" class="btn-small" style="font-size: 0.7rem;">🧹 Limpiar ya comprados</button>
+                </div>
+                <div id="list-compras" class="list-space"></div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 4C: BIBLIOTECA DE ARCHIVOS, PDF, DOCX Y VÍDEOS YOUTUBE -->
+        <section id="tab-recursos" class="space-y hidden">
+            <div class="hero-banner" style="background: linear-gradient(135deg, #d97706, #b45309);">
+                <div>
+                    <span class="hero-badge">Biblioteca Multimedia y Documentos</span>
+                    <h2>📚 Tus Archivos PDF, Word (.docx), Vídeos y URLs</h2>
+                    <p>Guarda apuntes en <strong>PDF o DOCX desde tu ordenador/móvil</strong>, vídeos locales o enlaces de <strong>YouTube y Apps instaladas</strong>. Puedes asignarlos al día actual o dejarlos como biblioteca general.</p>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Subir Archivo desde el Ordenador o Móvil -->
+                <div class="card">
+                    <div class="card-title-group" style="margin-bottom: 0.75rem;">
+                        <div class="cat-icon" style="background: #fef3c7; color: #b45309;">📄</div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700;">1. Añadir PDF, Word (.docx) o Vídeo desde tu dispositivo</h3>
+                            <p style="font-size: 0.75rem; color: var(--text-muted);">Se guarda en la base de datos interna del navegador (funciona sin internet).</p>
+                        </div>
+                    </div>
+                    <form onsubmit="handleAddFileResource(event)" class="space-y" style="margin-top: 0.5rem;">
+                        <input type="text" id="res-file-title" required placeholder="Título del documento o vídeo (Ej: Tema 1 Derecho.pdf)" class="input-text" style="width: 100%;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                            <label class="btn-small" style="flex: 1; cursor: pointer; text-align: center; padding: 0.6rem; background: #fffbeb; border-color: #fde68a; color: #92400e;">
+                                📂 <span id="res-file-input-label">Seleccionar archivo (PDF, DOCX, MP4...)</span>
+                                <input type="file" id="res-file-input" required accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,video/*,audio/*,image/*" onchange="updateFileLabel('res-file-input', 'res-file-input-label')" style="display: none;">
+                            </label>
+                            <select id="res-file-scope" class="input-time" style="font-size: 0.8rem;">
+                                <option value="general">📌 Guardar en Biblioteca General</option>
+                                <option value="day">📅 Asignar solo al día seleccionado</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.75rem; background: #b45309;">💾 Guardar Archivo en el Programa</button>
+                    </form>
+                </div>
+
+                <!-- Añadir URL de YouTube, Web o Aplicación instalada -->
+                <div class="card">
+                    <div class="card-title-group" style="margin-bottom: 0.75rem;">
+                        <div class="cat-icon" style="background: #fee2e2; color: #dc2626;">▶️</div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700;">2. Añadir Vídeo de YouTube o URL de Aplicación</h3>
+                            <p style="font-size: 0.75rem; color: var(--text-muted);">Pega un enlace de YouTube para verlo aquí mismo o abrirlo en la App instalada.</p>
+                        </div>
+                    </div>
+                    <form onsubmit="handleAddUrlResource(event)" class="space-y" style="margin-top: 0.5rem;">
+                        <input type="text" id="res-url-title" required placeholder="Título del vídeo o enlace (Ej: Clase magistral YouTube)" class="input-text" style="width: 100%;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                            <input type="text" id="res-url-input" required placeholder="https://www.youtube.com/watch?v=... o enlace..." class="input-text" style="flex: 1;">
+                            <select id="res-url-scope" class="input-time" style="font-size: 0.8rem;">
+                                <option value="general">📌 Biblioteca General</option>
+                                <option value="day">📅 Solo día seleccionado</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.75rem; background: #dc2626;">🔗 Guardar Vídeo / URL</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Visor Integrado de PDF, Vídeo y YouTube -->
+            <div id="media-viewer-card" class="card hidden" style="border: 2px solid var(--primary); background: #f8fafc;">
+                <div class="card-header" style="margin-bottom: 0.75rem; padding-bottom: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.2rem;">👁️</span>
+                        <h3 id="media-viewer-title" style="font-size: 1rem; font-weight: 700;">Reproductor / Visor Integrado</h3>
+                    </div>
+                    <button onclick="closeMediaViewer()" class="btn-small" style="background: var(--rose-light); color: var(--rose-dark); border: none;">✕ Cerrar Visor</button>
+                </div>
+                <div id="media-viewer-body" style="width: 100%; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0f172a; border-radius: 0.75rem; overflow: hidden;"></div>
+            </div>
+
+            <!-- Listado de Recursos Guardados -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h3 style="font-size: 0.95rem; font-weight: 700;">📂 Tus Documentos y Vídeos Guardados</h3>
+                        <p style="font-size: 0.75rem; color: var(--text-muted);">Mostrando los recursos generales y los exclusivos de la fecha: <strong id="res-current-date-label">Hoy</strong></p>
+                    </div>
+                    <div style="display: flex; gap: 0.4rem;">
+                        <button onclick="setResourceFilter('all')" id="btn-filter-all" class="btn-small" style="background: var(--primary); color: white;">Todos</button>
+                        <button onclick="setResourceFilter('day')" id="btn-filter-day" class="btn-small">Solo de este día</button>
+                        <button onclick="setResourceFilter('general')" id="btn-filter-general" class="btn-small">Biblioteca General</button>
+                    </div>
+                </div>
+                <div id="list-recursos" class="list-space"></div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 5: CALENDARIO -->
+        <section id="tab-calendario" class="space-y hidden">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 style="font-size: 1.25rem; font-weight: 700; text-transform: capitalize;" id="calendar-month-title">Mes Actual</h2>
+                        <p style="font-size: 0.75rem; color: var(--text-muted);">Navega por cualquier mes y año. Haz clic en un día para ver o programar sus actividades ocultas hasta esa fecha.</p>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                        <button onclick="changeCalendarYear(-1)" class="btn-small" title="Año anterior">&#10094;&#10094; Año</button>
+                        <button onclick="changeCalendarMonth(-1)" class="btn-small">&#10094; Mes</button>
+                        <button onclick="resetCalendarToCurrentMonth()" class="btn-small" style="background: var(--primary-light); color: var(--primary);">Hoy</button>
+                        <button onclick="changeCalendarMonth(1)" class="btn-small">Mes &#10095;</button>
+                        <button onclick="changeCalendarYear(1)" class="btn-small" title="Año siguiente">Año &#10095;&#10095;</button>
+                    </div>
+                </div>
+
+                <div class="cal-weekdays">
+                    <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div>
+                    <div style="color: var(--primary);">Sáb</div><div style="color: var(--primary);">Dom</div>
+                </div>
+
+                <div id="calendar-grid" class="cal-grid"></div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 6: ASISTENTE GEMINI IA -->
+        <section id="tab-gemini" class="space-y hidden">
+            <div class="hero-banner" style="background: linear-gradient(135deg, #4f46e5, #9333ea);">
+                <div>
+                    <span class="hero-badge">Inteligencia Artificial Híbrida</span>
+                    <h2>✨ Tu Entrenador Personal con Gemini</h2>
+                    <p>El control diario sigue siendo <strong>100% Offline</strong>. Cuando tengas internet, usa Gemini para analizar tu progreso o crear nuevas tareas automáticamente.</p>
+                </div>
+            </div>
+
+            <!-- Configuración opcional de API Key para uso fuera de este entorno -->
+            <div class="card">
+                <div class="card-header" style="margin-bottom: 0.75rem; padding-bottom: 0.75rem;">
+                    <div class="card-title-group">
+                        <div class="cat-icon" style="background: #f3e8ff; color: #7e22ce;">🔑</div>
+                        <div>
+                            <h3 style="font-size: 0.95rem; font-weight: 700;">Conexión con Gemini (Opcional fuera de línea)</h3>
+                            <p style="font-size: 0.75rem; color: var(--text-muted);">Aquí en la vista previa funciona directamente. Si descargaste el archivo en tu PC/Móvil, puedes pegar tu clave gratuita de Google AI Studio.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-top: 0;">
+                    <input type="password" id="gemini-api-key-input" placeholder="Pega tu API Key de Gemini aquí (opcional si estás en la vista previa)..." class="input-text" oninput="saveCustomApiKey(this.value)">
+                    <button onclick="toggleShowApiKey()" class="btn-small" type="button">👁️ Mostrar/Ocultar</button>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Tarjeta 1: Analizar el día y dar consejos -->
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div class="card-title-group" style="margin-bottom: 0.75rem;">
+                            <div class="cat-icon" style="background: #e0e7ff; color: #4338ca;">📊</div>
+                            <div>
+                                <h3 style="font-size: 1rem; font-weight: 700;">Analizar mi Día y Pendientes</h3>
+                                <p style="font-size: 0.75rem; color: var(--text-muted);">Gemini revisará tus porcentajes de hoy, las actividades que fallaste y tus pendientes para darte un plan de acción.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="askGeminiDailyAnalysis()" id="btn-gemini-analyze" class="btn-primary" style="width: 100%; background: #6d28d9; margin-top: 0.5rem;">
+                        ✨ Analizar mi rendimiento de hoy
+                    </button>
+                </div>
+
+                <!-- Tarjeta 2: Generador inteligente de actividades -->
+                <div class="card">
+                    <div class="card-title-group" style="margin-bottom: 0.75rem;">
+                        <div class="cat-icon" style="background: #fae8ff; color: #a21caf;">🪄</div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700;">Crear Tareas con IA</h3>
+                            <p style="font-size: 0.75rem; color: var(--text-muted);">Dile qué necesitas estudiar o hacer y Gemini creará las actividades por ti.</p>
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top: 0.5rem;">
+                        <input type="text" id="gemini-goal-input" placeholder="Ej: Tengo examen de historia y debo ordenar mi cuarto..." class="input-text">
+                        <button onclick="askGeminiSuggestTasks()" id="btn-gemini-suggest" class="btn-primary" style="background: #9333ea;">
+                            🪄 Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consulta libre a Gemini -->
+            <div class="card">
+                <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem;">💬 Pregúntale cualquier duda escolar o de organización a Gemini</h3>
+                <form onsubmit="askGeminiFreeQuestion(event)" class="form-row">
+                    <input type="text" id="gemini-chat-input" required placeholder="Ej: Explícame las ecuaciones de segundo grado o cómo organizar mi tarde..." class="input-text">
+                    <button type="submit" id="btn-gemini-chat" class="btn-primary">Enviar a Gemini</button>
+                </form>
+
+                <!-- Respuesta de Gemini -->
+                <div id="gemini-response-box" class="hidden" style="margin-top: 1.25rem; padding: 1.25rem; border-radius: 0.75rem; background: #faf5ff; border: 1px solid #e9d5ff;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #6d28d9; text-transform: uppercase;">✨ Respuesta de Gemini</span>
+                        <button onclick="document.getElementById('gemini-response-box').classList.add('hidden')" class="link-btn">Cerrar ✕</button>
+                    </div>
+                    <div id="gemini-response-content" style="font-size: 0.875rem; white-space: pre-wrap; color: #1e293b; line-height: 1.6;"></div>
+                    <div id="gemini-suggested-actions" style="margin-top: 1rem;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 7: SINCRONIZAR ENTRE DISPOSITIVOS -->
+        <section id="tab-sincronizar" class="space-y hidden">
+            <div class="hero-banner" style="background: linear-gradient(135deg, #0284c7, #0f766e);">
+                <div>
+                    <span class="hero-badge">Multi-Dispositivo (PC, Móvil y Tablet)</span>
+                    <h2>🔄 Sincronizar tus Datos al Día</h2>
+                    <p>Como la aplicación es 100% privada y sin servidores externos, aquí puedes pasar todos tus datos de un dispositivo a otro en segundos.</p>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Opción 1: Código Rápido (Por WhatsApp / Telegram / Correo / Portapapeles) -->
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div class="card-title-group" style="margin-bottom: 0.75rem;">
+                            <div class="cat-icon" style="background: #e0f2fe; color: #0369a1;">⚡</div>
+                            <div>
+                                <h3 style="font-size: 1rem; font-weight: 700;">1. Enviar desde este dispositivo</h3>
+                                <p style="font-size: 0.75rem; color: var(--text-muted);">Copia tu código de sincronización y envíatelo por WhatsApp, Telegram o Email a tu otro dispositivo, o compártelo directamente.</p>
+                            </div>
+                        </div>
+                        <textarea id="sync-code-output" readonly rows="3" style="width: 100%; font-size: 0.7rem; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid var(--border); background: #f8fafc; color: var(--text-muted); font-family: monospace; resize: none; margin-top: 0.5rem;" placeholder="Pulsa en Generar Código..."></textarea>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+                        <button onclick="copySyncCode()" class="btn-primary" style="flex: 1; background: #0284c7;">📋 Copiar Código</button>
+                        <button onclick="shareSyncData()" class="btn-small" style="flex: 1;">📲 Compartir directo</button>
+                    </div>
+                </div>
+
+                <!-- Opción 2: Recibir y Fusionar o Reemplazar -->
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div class="card-title-group" style="margin-bottom: 0.75rem;">
+                            <div class="cat-icon" style="background: #ccfbf1; color: #0f766e;">📥</div>
+                            <div>
+                                <h3 style="font-size: 1rem; font-weight: 700;">2. Recibir en el otro dispositivo</h3>
+                                <p style="font-size: 0.75rem; color: var(--text-muted);">Pega aquí el código que copiaste en tu otro aparato para actualizar tus actividades, historial y pendientes al instante.</p>
+                            </div>
+                        </div>
+                        <textarea id="sync-code-input" rows="3" style="width: 100%; font-size: 0.7rem; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-family: monospace; resize: none; margin-top: 0.5rem;" placeholder="Pega aquí el código de sincronización..."></textarea>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+                        <button onclick="applySyncCode('merge')" class="btn-primary" style="flex: 1; background: #0f766e;" title="Combina los días y tareas de ambos dispositivos sin borrar nada">🔄 Fusionar Datos (Recomendado)</button>
+                        <button onclick="applySyncCode('replace')" class="btn-small" style="color: var(--rose-dark);" title="Sustituye todo lo de este dispositivo por el código pegado">⚠️ Sobrescribir todo</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Opción 3: Por Archivo en Google Drive / OneDrive / iCloud -->
+            <div class="card">
+                <div class="card-title-group" style="margin-bottom: 0.75rem;">
+                    <div class="cat-icon" style="background: #fef3c7; color: #b45309;">☁️</div>
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700;">Sincronización mediante Carpeta en la Nube (Google Drive / iCloud / OneDrive)</h3>
+                        <p style="font-size: 0.75rem; color: var(--text-muted);">Si guardas el archivo de copia en una carpeta de Google Drive o iCloud, podrás cargarlo desde cualquier dispositivo en 2 clics.</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                    <button onclick="exportBackup()" class="btn-small" style="padding: 0.6rem 1rem;">💾 1. Guardar archivo para la Nube (.json)</button>
+                    <label class="btn-small" style="cursor: pointer; padding: 0.6rem 1rem; background: var(--primary-light); color: var(--primary);">
+                        📂 2. Cargar archivo desde la Nube (.json)
+                        <input type="file" accept=".json" onchange="importBackup(event)" style="display: none;">
+                    </label>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Pie con Copia de Seguridad Offline -->
+    <footer>
+        <p>Funciona 100% sin conexión a internet (Offline). Tus datos se guardan en este navegador.</p>
+        <div class="backup-bar">
+            <button onclick="exportBackup()" class="btn-small">💾 Descargar Copia de Seguridad</button>
+            <label class="btn-small" style="cursor: pointer;">
+                📂 Restaurar Copia de Seguridad
+                <input type="file" accept=".json" onchange="importBackup(event)" style="display: none;">
+            </label>
+        </div>
+    </footer>
+
+    <script>
+        const STORAGE_KEYS = {
+            ACTIVITIES_BY_DATE: 'control_diario_activities_by_date_v2',
+            LEGACY_ACTIVITIES: 'control_diario_activities_v1',
+            LOGS: 'control_diario_logs_v1',
+            PENDINGS: 'control_diario_pendings_v1',
+            SHOPPING: 'control_diario_shopping_v1',
+            RESOURCES: 'control_diario_resources_v1',
+            GEMINI_KEY: 'control_diario_gemini_key_v1',
+            ANIMAL_OVERRIDES: 'control_diario_animals_v1'
+        };
+
+        // --- CATÁLOGO DE ANIMALES DEL DÍA (CON FOTOS REALES Y RESPALDO OFFLINE) ---
+        const DAILY_ANIMALS = [
+            { name: "León Africano", emoji: "🦁", bg: "#fef3c7", photo: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=300&q=80", fact: "Su rugido puede escucharse hasta a 8 km de distancia." },
+            { name: "Delfín Mular", emoji: "🐬", bg: "#e0f2fe", photo: "https://images.unsplash.com/photo-1607153333879-c174d265f1d2?auto=format&fit=crop&w=300&q=80", fact: "Duerme con un ojo abierto y la mitad de su cerebro activo." },
+            { name: "Panda Gigante", emoji: "🐼", bg: "#dcfce7", photo: "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?auto=format&fit=crop&w=300&q=80", fact: "Dedica hasta 12 horas al día a comer bambú fresco." },
+            { name: "Zorro Rojo", emoji: "🦊", bg: "#ffedd5", photo: "https://images.unsplash.com/photo-1474511320723-9a56873867b5?auto=format&fit=crop&w=300&q=80", fact: "Usa el campo magnético de la Tierra para orientarse y cazar." },
+            { name: "Búho Real", emoji: "🦉", bg: "#f3e8ff", photo: "https://images.unsplash.com/photo-1543549790-8b5f4a028cfb?auto=format&fit=crop&w=300&q=80", fact: "Puede girar su cabeza hasta 270 grados sin mover el cuerpo." },
+            { name: "Tortuga Marina", emoji: "🐢", bg: "#ccfbf1", photo: "https://images.unsplash.com/photo-1518467166778-b88f373ffec7?auto=format&fit=crop&w=300&q=80", fact: "Regresa exactamente a la misma playa donde nació." },
+            { name: "Tigre de Bengala", emoji: "🐯", bg: "#ffedd5", photo: "https://images.unsplash.com/photo-1508817628294-5a453fa0b8fb?auto=format&fit=crop&w=300&q=80", fact: "Las rayas de cada tigre son únicas, como nuestras huellas." },
+            { name: "Koala Australiano", emoji: "🐨", bg: "#f1f5f9", photo: "https://images.unsplash.com/photo-1459262838948-3e2de6c1ec80?auto=format&fit=crop&w=300&q=80", fact: "Sus huellas dactilares son casi idénticas a las humanas." },
+            { name: "Elefante Africano", emoji: "🐘", bg: "#e2e8f0", photo: "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&w=300&q=80", fact: "Tiene el cerebro más grande del mundo animal terrestre." },
+            { name: "Pingüino Emperador", emoji: "🐧", bg: "#dbeafe", photo: "https://images.unsplash.com/photo-1598439210625-5067c578f3f6?auto=format&fit=crop&w=300&q=80", fact: "Puede sumergirse a más de 500 metros de profundidad." },
+            { name: "Lobo Gris", emoji: "🐺", bg: "#e2e8f0", photo: "https://images.unsplash.com/photo-1564466809058-bf4114d55352?auto=format&fit=crop&w=300&q=80", fact: "Recorre hasta 60 kilómetros en un solo día con su manada." },
+            { name: "Caballo Salvaje", emoji: "🐎", bg: "#fef3c7", photo: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?auto=format&fit=crop&w=300&q=80", fact: "Tiene un campo de visión de casi 360 grados a su alrededor." },
+            { name: "Águila Real", emoji: "🦅", bg: "#fef9c3", photo: "https://images.unsplash.com/photo-1611689342806-0863700ce1e4?auto=format&fit=crop&w=300&q=80", fact: "Su vista es hasta 8 veces más aguda que la del ser humano." },
+            { name: "Nutria Marina", emoji: "🦦", bg: "#e0e7ff", photo: "https://images.unsplash.com/photo-1579380656108-f98e4df8ea62?auto=format&fit=crop&w=300&q=80", fact: "Se toman de las patas al dormir para no separarse en el agua." },
+            { name: "Jirafa Reticulada", emoji: "🦒", bg: "#fef08a", photo: "https://images.unsplash.com/photo-1547721064-da6cfb341d50?auto=format&fit=crop&w=300&q=80", fact: "Su corazón pesa 11 kilos para impulsar sangre hasta su cabeza." },
+            { name: "Guacamayo Rojo", emoji: "🦜", bg: "#fee2e2", photo: "https://images.unsplash.com/photo-1552728089-57bdde30beb3?auto=format&fit=crop&w=300&q=80", fact: "Puede vivir más de 60 años y recordar cientos de sonidos." },
+            { name: "Ciervo Rojo", emoji: "🦌", bg: "#dcfce7", photo: "https://images.unsplash.com/photo-1484406566174-9da000fda645?auto=format&fit=crop&w=300&q=80", fact: "Renueva su cornamenta completa cada año en primavera." },
+            { name: "Gato Montés", emoji: "🐱", bg: "#f3e8ff", photo: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=300&q=80", fact: "Salta hasta 6 veces su propia longitud de un solo impulso." },
+            { name: "Perro Pastor", emoji: "🐶", bg: "#ffedd5", photo: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=300&q=80", fact: "Su olfato es hasta 100.000 veces más potente que el nuestro." },
+            { name: "Cebra de Llanura", emoji: "🦓", bg: "#f1f5f9", photo: "https://images.unsplash.com/photo-1501706362039-c06b2d715385?auto=format&fit=crop&w=300&q=80", fact: "Sus rayas ayudan a refrescar su piel bajo el sol africano." },
+            { name: "Cisne Blanco", emoji: "🦢", bg: "#e0f2fe", photo: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=300&q=80", fact: "Cuenta con más de 25.000 plumas en todo su cuerpo." },
+            { name: "Oso Pardo", emoji: "🐻", bg: "#fef3c7", photo: "https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&w=300&q=80", fact: "A pesar de su tamaño, puede correr a 50 km/h." },
+            { name: "Flamenco Rosado", emoji: "🦩", bg: "#fce7f3", photo: "https://images.unsplash.com/photo-1497206365907-f5e630693df0?auto=format&fit=crop&w=300&q=80", fact: "Su color rosado proviene de los carotenoides de su dieta." },
+            { name: "Conejo Silvestre", emoji: "🐰", bg: "#dcfce7", photo: "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=300&q=80", fact: "Sus orejas giran de forma independiente para detectar sonidos." },
+            { name: "Ballena Jorobada", emoji: "🐋", bg: "#dbeafe", photo: "https://images.unsplash.com/photo-1568430462989-44163eb1752f?auto=format&fit=crop&w=300&q=80", fact: "Sus cantos submarinos duran horas y viajan cientos de kilómetros." },
+            { name: "Mariposa Monarca", emoji: "🦋", bg: "#ffedd5", photo: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=300&q=80", fact: "Realiza migraciones de más de 4.000 km cada año." },
+            { name: "Erizo Europeo", emoji: "🦔", bg: "#fef9c3", photo: "https://images.unsplash.com/photo-1584553421349-3557471bed79?auto=format&fit=crop&w=300&q=80", fact: "Tiene entre 5.000 y 7.000 púas protectoras en su dorso." },
+            { name: "Camaleón Velado", emoji: "🦎", bg: "#d1fae5", photo: "https://images.unsplash.com/photo-1504450874802-0ba2bcd9b5ae?auto=format&fit=crop&w=300&q=80", fact: "Mueve sus dos ojos en direcciones distintas al mismo tiempo." },
+            { name: "Ardilla Roja", emoji: "🐿️", bg: "#ffedd5", photo: "https://images.unsplash.com/photo-1507666405895-422eee7d517f?auto=format&fit=crop&w=300&q=80", fact: "Ayuda a renovar los bosques al enterrar semillas que luego brotan." },
+            { name: "Pavo Real", emoji: "🦚", bg: "#ccfbf1", photo: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=300&q=80", fact: "Sus plumas tienen microestructuras que reflejan la luz como cristales." },
+            { name: "Leopardo de las Nieves", emoji: "🐆", bg: "#f1f5f9", photo: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=300&q=80", fact: "Su larga cola le sirve de abrigo y timón en las montañas." }
+        ];
+
+        let animalOverrides = {};
+
+        function createOfflineAnimalSvg(emoji, bg) {
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+                <rect width="120" height="120" fill="${bg || '#e0e7ff'}"/>
+                <circle cx="60" cy="60" r="46" fill="rgba(255,255,255,0.65)"/>
+                <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-size="58">${emoji || '🐾'}</text>
+            </svg>`;
+            return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+        }
+
+        function getAnimalIndexForDate(dateStr) {
+            const override = animalOverrides[dateStr];
+            if (override && typeof override.index === 'number') {
+                return override.index % DAILY_ANIMALS.length;
+            }
+            // Cálculo determinista por fecha para que cada día del año tenga un animal distinto
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const dayOfYear = Math.floor((new Date(y, m - 1, d) - new Date(y, 0, 0)) / 86400000);
+            return Math.abs(y * 3 + dayOfYear) % DAILY_ANIMALS.length;
+        }
+
+        async function updateDailyAnimalBanner() {
+            const imgEl = document.getElementById('animal-day-img');
+            const nameEl = document.getElementById('animal-day-name');
+            const factEl = document.getElementById('animal-day-fact');
+            if (!imgEl || !nameEl || !factEl) return;
+
+            const idx = getAnimalIndexForDate(selectedDateStr);
+            const animal = DAILY_ANIMALS[idx];
+            const override = animalOverrides[selectedDateStr] || {};
+            const fallbackSvg = createOfflineAnimalSvg(animal.emoji, animal.bg);
+
+            nameEl.textContent = `${animal.emoji} ${override.customName || animal.name}`;
+            factEl.textContent = animal.fact;
+
+            // Si el usuario subió su propia foto de animal para este día, cargarla desde IndexedDB
+            if (override.customFileId) {
+                try {
+                    const rec = await getFileFromIDB(override.customFileId);
+                    if (rec && rec.blob) {
+                        imgEl.onerror = null;
+                        imgEl.src = URL.createObjectURL(rec.blob);
+                        return;
+                    }
+                } catch (e) {}
+            }
+
+            // Si no hay foto personalizada: mostrar foto real y si está sin internet usar el SVG offline
+            imgEl.onerror = function() {
+                this.onerror = null;
+                this.src = fallbackSvg;
+            };
+            imgEl.src = animal.photo;
+        }
+
+        function cycleDayAnimal() {
+            const currentIdx = getAnimalIndexForDate(selectedDateStr);
+            const nextIdx = (currentIdx + 1) % DAILY_ANIMALS.length;
+            animalOverrides[selectedDateStr] = { index: nextIdx };
+            localStorage.setItem(STORAGE_KEYS.ANIMAL_OVERRIDES, JSON.stringify(animalOverrides));
+            updateDailyAnimalBanner();
+            showToast(`Animal cambiado: ${DAILY_ANIMALS[nextIdx].name}`);
+        }
+
+        async function uploadCustomAnimalPhoto(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const fileId = 'animal-photo-' + selectedDateStr;
+            try {
+                await saveFileToIDB(fileId, file, file.name, file.type || 'image/jpeg');
+                const currentIdx = getAnimalIndexForDate(selectedDateStr);
+                animalOverrides[selectedDateStr] = {
+                    index: currentIdx,
+                    customFileId: fileId,
+                    customName: file.name.replace(/\.[^/.]+$/, '')
+                };
+                localStorage.setItem(STORAGE_KEYS.ANIMAL_OVERRIDES, JSON.stringify(animalOverrides));
+                updateDailyAnimalBanner();
+                showToast('¡Foto de animal guardada para este día!');
+            } catch (e) {
+                showToast('No se pudo guardar la foto', true);
+            }
+        }
+
+        // --- BASE DE DATOS INTERNA (IndexedDB) PARA GUARDAR PDF, DOCX Y VÍDEOS PESADOS OFFLINE ---
+        const IDB_NAME = 'ControlDiarioFilesDB';
+        const IDB_STORE = 'files';
+
+        function openFilesDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(IDB_NAME, 1);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(IDB_STORE)) {
+                        db.createObjectStore(IDB_STORE, { keyPath: 'id' });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function saveFileToIDB(id, fileBlob, fileName, mimeType) {
+            const db = await openFilesDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(IDB_STORE, 'readwrite');
+                tx.objectStore(IDB_STORE).put({ id, blob: fileBlob, fileName, mimeType });
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        async function getFileFromIDB(id) {
+            const db = await openFilesDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(IDB_STORE, 'readonly');
+                const req = tx.objectStore(IDB_STORE).get(id);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function deleteFileFromIDB(id) {
+            if (!id) return;
+            try {
+                const db = await openFilesDB();
+                const tx = db.transaction(IDB_STORE, 'readwrite');
+                tx.objectStore(IDB_STORE).delete(id);
+            } catch (e) {}
+        }
+
+        function updateFileLabel(inputId, labelId) {
+            const input = document.getElementById(inputId);
+            const label = document.getElementById(labelId);
+            if (!input || !label) return;
+            if (input.files && input.files[0]) {
+                label.textContent = input.files[0].name;
+            } else {
+                label.textContent = 'Adjuntar PDF/DOCX/Vídeo';
+            }
+        }
+
+        function getLocalTodayStr() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        let selectedDateStr = getLocalTodayStr();
+        let currentCalendarDate = new Date();
+        let editingActivityId = null;
+
+        // Mapa de actividades independientes por cada fecha: { "YYYY-MM-DD": [ {id, title, category, time, url, fileId, fileName, fileType} ] }
+        let activitiesByDate = {};
+        let dailyLogs = {};
+        let pendingActions = [];
+        let editingPendingId = null;
+        let shoppingList = [];
+        let editingShoppingId = null;
+        let resourcesList = [];
+        let resourceFilter = 'all';
+        let currentObjectUrl = null;
+        let userCustomApiKey = '';
+
+        function getDayActivities(dateStr = selectedDateStr) {
+            if (!activitiesByDate[dateStr]) {
+                activitiesByDate[dateStr] = [];
+            }
+            return activitiesByDate[dateStr];
+        }
+
+        function loadData() {
+            try {
+                const savedByDate = localStorage.getItem(STORAGE_KEYS.ACTIVITIES_BY_DATE);
+                const savedLogs = localStorage.getItem(STORAGE_KEYS.LOGS);
+                const savedPendings = localStorage.getItem(STORAGE_KEYS.PENDINGS);
+                const savedShopping = localStorage.getItem(STORAGE_KEYS.SHOPPING);
+                const savedResources = localStorage.getItem(STORAGE_KEYS.RESOURCES);
+                const savedAnimals = localStorage.getItem(STORAGE_KEYS.ANIMAL_OVERRIDES);
+                userCustomApiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_KEY) || '';
+                const keyInput = document.getElementById('gemini-api-key-input');
+                if (keyInput) keyInput.value = userCustomApiKey;
+
+                dailyLogs = savedLogs ? JSON.parse(savedLogs) : {};
+                pendingActions = savedPendings ? JSON.parse(savedPendings) : [];
+                shoppingList = savedShopping ? JSON.parse(savedShopping) : [];
+                resourcesList = savedResources ? JSON.parse(savedResources) : [];
+                animalOverrides = savedAnimals ? JSON.parse(savedAnimals) : {};
+
+                if (savedByDate) {
+                    activitiesByDate = JSON.parse(savedByDate);
+                } else {
+                    const legacyActs = localStorage.getItem(STORAGE_KEYS.LEGACY_ACTIVITIES);
+                    activitiesByDate = {};
+                    if (legacyActs) {
+                        const parsedLegacy = JSON.parse(legacyActs);
+                        if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0) {
+                            activitiesByDate[getLocalTodayStr()] = parsedLegacy.map(a => ({ ...a }));
+                            Object.keys(dailyLogs).forEach(dKey => {
+                                if (!activitiesByDate[dKey]) {
+                                    activitiesByDate[dKey] = parsedLegacy.map(a => ({ ...a }));
+                                }
+                            });
+                        }
+                    }
+                    saveActivities();
+                }
+            } catch (e) {
+                activitiesByDate = {};
+                dailyLogs = {};
+                pendingActions = [];
+                shoppingList = [];
+                resourcesList = [];
+            }
+        }
+
+        function saveActivities() {
+            localStorage.setItem(STORAGE_KEYS.ACTIVITIES_BY_DATE, JSON.stringify(activitiesByDate));
+            updateBadges();
+        }
+
+        function savePendings() {
+            localStorage.setItem(STORAGE_KEYS.PENDINGS, JSON.stringify(pendingActions));
+            updateBadges();
+        }
+
+        function saveShopping() {
+            localStorage.setItem(STORAGE_KEYS.SHOPPING, JSON.stringify(shoppingList));
+            updateBadges();
+        }
+
+        function saveResources() {
+            localStorage.setItem(STORAGE_KEYS.RESOURCES, JSON.stringify(resourcesList));
+            updateBadges();
+        }
+
+        function saveLogs() {
+            localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(dailyLogs));
+        }
+
+        function switchTab(tabName) {
+            ['cumplir', 'escolares', 'cotidianas', 'pendientes', 'compras', 'recursos', 'calendario', 'gemini', 'sincronizar'].forEach(t => {
+                const sec = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (!sec || !btn) return;
+                if (t === tabName) {
+                    sec.classList.remove('hidden');
+                    btn.classList.add('tab-active');
+                } else {
+                    sec.classList.add('hidden');
+                    btn.classList.remove('tab-active');
+                }
+            });
+
+            if (tabName === 'cumplir') renderChecklistAndSummary();
+            if (tabName === 'escolares') renderCrudList('escolar');
+            if (tabName === 'cotidianas') renderCrudList('cotidiana');
+            if (tabName === 'pendientes') renderPendingsList();
+            if (tabName === 'compras') renderShoppingList();
+            if (tabName === 'recursos') renderResourcesList();
+            if (tabName === 'calendario') renderCalendar();
+            if (tabName === 'sincronizar') generateSyncCode();
+        }
+
+        // --- SINCRONIZACIÓN ENTRE DISPOSITIVOS ---
+        function generateSyncCode() {
+            const payload = { activitiesByDate, dailyLogs, pendingActions, shoppingList, resourcesList, updatedAt: new Date().toISOString() };
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+            const out = document.getElementById('sync-code-output');
+            if (out) out.value = encoded;
+            return encoded;
+        }
+
+        function copySyncCode() {
+            const code = generateSyncCode();
+            const out = document.getElementById('sync-code-output');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(() => {
+                    showToast('Código copiado. Envíatelo a tu otro dispositivo');
+                });
+            } else if (out) {
+                out.select();
+                document.execCommand('copy');
+                showToast('Código copiado al portapapeles');
+            }
+        }
+
+        async function shareSyncData() {
+            const code = generateSyncCode();
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Sincronización Control Diario',
+                        text: code
+                    });
+                } catch (e) {}
+            } else {
+                copySyncCode();
+            }
+        }
+
+        function applySyncCode(mode) {
+            const input = document.getElementById('sync-code-input');
+            const raw = (input ? input.value : '').trim();
+            if (!raw) {
+                showToast('Pega primero el código del otro dispositivo', true);
+                return;
+            }
+            try {
+                const decoded = decodeURIComponent(escape(atob(raw)));
+                const incoming = JSON.parse(decoded);
+                if (typeof incoming.dailyLogs !== 'object') {
+                    throw new Error('Formato inválido');
+                }
+
+                const incomingByDate = incoming.activitiesByDate || {};
+
+                if (mode === 'replace') {
+                    activitiesByDate = incomingByDate;
+                    dailyLogs = incoming.dailyLogs;
+                    pendingActions = Array.isArray(incoming.pendingActions) ? incoming.pendingActions : [];
+                    shoppingList = Array.isArray(incoming.shoppingList) ? incoming.shoppingList : [];
+                    resourcesList = Array.isArray(incoming.resourcesList) ? incoming.resourcesList : [];
+                } else {
+                    // Fusión inteligente día por día independiente
+                    Object.keys(incomingByDate).forEach(dateKey => {
+                        if (!activitiesByDate[dateKey]) {
+                            activitiesByDate[dateKey] = incomingByDate[dateKey];
+                        } else {
+                            const existingIds = new Set(activitiesByDate[dateKey].map(a => a.id));
+                            incomingByDate[dateKey].forEach(incAct => {
+                                if (!existingIds.has(incAct.id)) {
+                                    activitiesByDate[dateKey].push(incAct);
+                                }
+                            });
+                        }
+                    });
+
+                    Object.keys(incoming.dailyLogs).forEach(dateKey => {
+                        if (!dailyLogs[dateKey]) {
+                            dailyLogs[dateKey] = incoming.dailyLogs[dateKey];
+                        } else {
+                            dailyLogs[dateKey] = { ...dailyLogs[dateKey], ...incoming.dailyLogs[dateKey] };
+                        }
+                    });
+
+                    if (Array.isArray(incoming.pendingActions)) {
+                        const localMap = new Map(pendingActions.map(p => [p.id, p]));
+                        incoming.pendingActions.forEach(incPend => {
+                            if (!localMap.has(incPend.id)) {
+                                pendingActions.push(incPend);
+                            } else if (incPend.done) {
+                                localMap.get(incPend.id).done = true;
+                            }
+                        });
+                    }
+
+                    if (Array.isArray(incoming.shoppingList)) {
+                        const localShopMap = new Map(shoppingList.map(s => [s.id, s]));
+                        incoming.shoppingList.forEach(incShop => {
+                            if (!localShopMap.has(incShop.id)) {
+                                shoppingList.push(incShop);
+                            } else if (incShop.done) {
+                                localShopMap.get(incShop.id).done = true;
+                            }
+                        });
+                    }
+
+                    if (Array.isArray(incoming.resourcesList)) {
+                        const localResMap = new Map(resourcesList.map(r => [r.id, r]));
+                        incoming.resourcesList.forEach(incRes => {
+                            if (!localResMap.has(incRes.id)) {
+                                resourcesList.push(incRes);
+                            }
+                        });
+                    }
+                }
+
+                saveActivities();
+                saveLogs();
+                savePendings();
+                saveShopping();
+                saveResources();
+                generateSyncCode();
+                input.value = '';
+                showToast(mode === 'merge' ? '¡Datos fusionados y sincronizados!' : '¡Datos reemplazados con éxito!');
+                switchTab('cumplir');
+            } catch (e) {
+                showToast('El código pegado no es válido o está incompleto', true);
+            }
+        }
+
+        // --- INTEGRACIÓN CON GEMINI API ---
+        function saveCustomApiKey(val) {
+            userCustomApiKey = val.trim();
+            localStorage.setItem(STORAGE_KEYS.GEMINI_KEY, userCustomApiKey);
+        }
+
+        function toggleShowApiKey() {
+            const input = document.getElementById('gemini-api-key-input');
+            if (input) input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        async function callGeminiAPI(userPrompt, systemPrompt, jsonSchema = null) {
+            const apiKey = userCustomApiKey || "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            if (jsonSchema) {
+                payload.generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: jsonSchema
+                };
+            }
+
+            let delay = 1000;
+            for (let attempt = 0; attempt < 4; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const result = await response.json();
+                    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!text) throw new Error('Respuesta vacía');
+                    return text;
+                } catch (err) {
+                    if (attempt === 3) throw err;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        function showGeminiBox(text, extraHtml = '') {
+            const box = document.getElementById('gemini-response-box');
+            const content = document.getElementById('gemini-response-content');
+            const actions = document.getElementById('gemini-suggested-actions');
+            box.classList.remove('hidden');
+            content.textContent = text;
+            actions.innerHTML = extraHtml;
+        }
+
+        async function askGeminiDailyAnalysis() {
+            const btn = document.getElementById('btn-gemini-analyze');
+            btn.disabled = true;
+            btn.textContent = '⏳ Analizando tu día con Gemini...';
+            showGeminiBox('Consultando a Gemini sobre tus actividades de este día...');
+
+            try {
+                const dayActs = getDayActivities(selectedDateStr);
+                const dayLog = dailyLogs[selectedDateStr] || {};
+                const cumplidas = dayActs.filter(a => dayLog[a.id] === 'si').map(a => a.title);
+                const incumplidas = dayActs.filter(a => dayLog[a.id] === 'no').map(a => a.title);
+                const sinMarcar = dayActs.filter(a => !dayLog[a.id]).map(a => a.title);
+                const pendientes = pendingActions.filter(p => !p.done).map(p => p.title);
+
+                const prompt = `Fecha seleccionada: ${selectedDateStr}.
+Actividades cumplidas (SÍ): ${cumplidas.join(', ') || 'Ninguna'}.
+Actividades incumplidas (NO): ${incumplidas.join(', ') || 'Ninguna'}.
+Sin responder aún: ${sinMarcar.join(', ') || 'Ninguna'}.
+Acciones pendientes urgentes: ${pendientes.join(', ') || 'Ninguna'}.
+Dame un resumen motivador en español, evalúa mi porcentaje de éxito de este día y dime 3 consejos breves para organizar lo que me falta.`;
+
+                const reply = await callGeminiAPI(
+                    prompt,
+                    "Eres un entrenador de hábitos y tutor escolar cercano, claro y motivador. Responde en español con viñetas claras."
+                );
+                showGeminiBox(reply);
+            } catch (e) {
+                showGeminiBox('⚠️ No se pudo conectar con Gemini. Si estás sin internet, recuerda que la IA requiere conexión o configurar tu API Key gratuita en el recuadro superior.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '✨ Analizar mi rendimiento de hoy';
+            }
+        }
+
+        let lastSuggestedTasks = [];
+        async function askGeminiSuggestTasks() {
+            const input = document.getElementById('gemini-goal-input');
+            const goal = input.value.trim();
+            if (!goal) {
+                showToast('Escribe primero tu objetivo o tarea', true);
+                return;
+            }
+
+            const btn = document.getElementById('btn-gemini-suggest');
+            btn.disabled = true;
+            btn.textContent = '⏳...';
+            showGeminiBox('Generando actividades recomendadas con Gemini...');
+
+            const schema = {
+                type: "ARRAY",
+                items: {
+                    type: "OBJECT",
+                    properties: {
+                        title: { type: "STRING" },
+                        category: { type: "STRING" },
+                        time: { type: "STRING" }
+                    },
+                    propertyOrdering: ["title", "category", "time"]
+                }
+            };
+
+            try {
+                const rawJson = await callGeminiAPI(
+                    `Convierte este objetivo en entre 2 y 4 actividades concretas: "${goal}". Asigna category como "escolar" o "cotidiana" o "pendiente", y una hora sugerida en formato HH:MM.`,
+                    "Eres un planificador de tareas escolares y cotidianas. Devuelve siempre un JSON válido.",
+                    schema
+                );
+                lastSuggestedTasks = JSON.parse(rawJson);
+
+                const buttonsHtml = lastSuggestedTasks.map((t, idx) => `
+                    <div class="task-item" style="margin-top: 0.5rem; background: white;">
+                        <div class="task-info">
+                            <p class="task-title">${escapeHtml(t.title)}</p>
+                            <span class="task-time">Categoría: <strong>${escapeHtml(t.category)}</strong> ${t.time ? '· 🕒 ' + escapeHtml(t.time) : ''}</span>
+                        </div>
+                        <button onclick="addSuggestedTask(${idx})" class="btn-small" style="background: #dcfce7; color: #166534; border-color: #86efac;">
+                            + Añadir al día ${selectedDateStr}
+                        </button>
+                    </div>
+                `).join('');
+
+                showGeminiBox(`He preparado estas actividades para el día ${selectedDateStr}. Pulsa en añadir en las que quieras guardar:`, buttonsHtml);
+            } catch (e) {
+                showGeminiBox('⚠️ No se pudieron generar las tareas. Verifica tu conexión a internet o tu clave de API.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🪄 Generar';
+            }
+        }
+
+        function addSuggestedTask(index) {
+            const item = lastSuggestedTasks[index];
+            if (!item) return;
+
+            const cat = (item.category || '').toLowerCase();
+            if (cat.includes('pendiente')) {
+                pendingActions.unshift({
+                    id: 'pend-' + Date.now() + '-' + index,
+                    title: item.title,
+                    done: false,
+                    createdAt: formatHumanDate(getLocalTodayStr())
+                });
+                savePendings();
+                showToast('Añadida a Acciones Pendientes');
+            } else {
+                const finalCat = cat.includes('escolar') ? 'escolar' : 'cotidiana';
+                const dayActs = getDayActivities(selectedDateStr);
+                dayActs.push({
+                    id: 'act-' + Date.now() + '-' + index,
+                    title: item.title,
+                    category: finalCat,
+                    time: item.time || ''
+                });
+                saveActivities();
+                showToast(`Añadida al día ${selectedDateStr}`);
+            }
+        }
+
+        async function askGeminiFreeQuestion(event) {
+            event.preventDefault();
+            const input = document.getElementById('gemini-chat-input');
+            const question = input.value.trim();
+            if (!question) return;
+
+            const btn = document.getElementById('btn-gemini-chat');
+            btn.disabled = true;
+            btn.textContent = '⏳ Pensando...';
+            showGeminiBox('Gemini está redactando tu respuesta...');
+
+            try {
+                const reply = await callGeminiAPI(
+                    question,
+                    "Eres un asistente educativo y de organización personal integrado en una app de Control Diario. Responde en español de forma clara, didáctica y concisa."
+                );
+                showGeminiBox(reply);
+                input.value = '';
+            } catch (e) {
+                showGeminiBox('⚠️ Error al conectar con Gemini. Comprueba que tienes conexión a internet.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Enviar a Gemini';
+            }
+        }
+
+        function formatHumanDate(dateStr) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            return dateObj.toLocaleDateString('es-ES', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+        }
+
+        function updateHeaderDateInfo() {
+            const todayStr = getLocalTodayStr();
+            document.getElementById('current-date-header').textContent = `Hoy es ${formatHumanDate(todayStr)}`;
+            document.getElementById('active-date-picker').value = selectedDateStr;
+
+            const isToday = selectedDateStr === todayStr;
+            const formatted = formatHumanDate(selectedDateStr);
+            const titleText = isToday ? `Hoy, ${formatted}` : formatted.charAt(0).toUpperCase() + formatted.slice(1);
+            document.getElementById('selected-day-title').textContent = titleText;
+            document.getElementById('selected-day-badge').textContent = isToday ? 'Actividades Exclusivas de Hoy' : `Registro Independiente: ${selectedDateStr}`;
+
+            const escLabel = document.getElementById('esc-tab-date-label');
+            const cotLabel = document.getElementById('cot-tab-date-label');
+            const resDateLabel = document.getElementById('res-current-date-label');
+            if (escLabel) escLabel.textContent = titleText;
+            if (cotLabel) cotLabel.textContent = titleText;
+            if (resDateLabel) resDateLabel.textContent = titleText;
+
+            const btnToday = document.getElementById('btn-today');
+            if (isToday) btnToday.classList.add('disabled');
+            else btnToday.classList.remove('disabled');
+            updateDailyAnimalBanner();
+            updateBadges();
+        }
+
+        function refreshActiveViews() {
+            updateHeaderDateInfo();
+            renderChecklistAndSummary();
+            renderCrudList('escolar');
+            renderCrudList('cotidiana');
+            renderPendingsList();
+            renderShoppingList();
+            renderResourcesList();
+            renderCalendar();
+        }
+
+        function copyFromPreviousDay() {
+            const [y, m, d] = selectedDateStr.split('-').map(Number);
+            const prevDateObj = new Date(y, m - 1, d);
+            prevDateObj.setDate(prevDateObj.getDate() - 1);
+            const prevDateStr = `${prevDateObj.getFullYear()}-${String(prevDateObj.getMonth() + 1).padStart(2, '0')}-${String(prevDateObj.getDate()).padStart(2, '0')}`;
+
+            const prevActs = activitiesByDate[prevDateStr] || [];
+            if (prevActs.length === 0) {
+                showToast(`No hay actividades registradas en el día anterior (${prevDateStr})`, true);
+                return;
+            }
+
+            const currentActs = getDayActivities(selectedDateStr);
+            const existingTitles = new Set(currentActs.map(a => `${a.category}:${a.title.toLowerCase()}`));
+            let copiedCount = 0;
+
+            prevActs.forEach((act, idx) => {
+                const key = `${act.category}:${act.title.toLowerCase()}`;
+                if (!existingTitles.has(key)) {
+                    currentActs.push({
+                        id: 'act-' + Date.now() + '-' + idx,
+                        title: act.title,
+                        category: act.category,
+                        time: act.time || '',
+                        url: act.url || '',
+                        fileId: act.fileId || null,
+                        fileName: act.fileName || '',
+                        fileType: act.fileType || ''
+                    });
+                    copiedCount++;
+                }
+            });
+
+            if (copiedCount === 0) {
+                showToast('Las tareas del día anterior ya están en este día');
+                return;
+            }
+
+            saveActivities();
+            renderChecklistAndSummary();
+            renderCrudList('escolar');
+            renderCrudList('cotidiana');
+            renderCalendar();
+            showToast(`Se copiaron ${copiedCount} tareas del día ${prevDateStr}`);
+        }
+
+        // --- GESTIÓN DE ACCIONES PENDIENTES ---
+        function handleAddPending(event) {
+            event.preventDefault();
+            const input = document.getElementById('input-pending-title');
+            if (!input) return;
+            const title = input.value.trim();
+            if (!title) return;
+
+            pendingActions.unshift({
+                id: 'pend-' + Date.now(),
+                title,
+                done: false,
+                createdAt: formatHumanDate(getLocalTodayStr())
+            });
+            savePendings();
+            input.value = '';
+            renderPendingsList();
+            showToast('Acción pendiente añadida');
+        }
+
+        function togglePendingDone(id) {
+            const item = pendingActions.find(p => p.id === id);
+            if (!item) return;
+            item.done = !item.done;
+            savePendings();
+            renderPendingsList();
+            showToast(item.done ? 'Marcada como realizada' : 'Marcada como pendiente');
+        }
+
+        function startEditPending(id) {
+            editingPendingId = id;
+            renderPendingsList();
+        }
+
+        function cancelEditPending() {
+            editingPendingId = null;
+            renderPendingsList();
+        }
+
+        function saveEditPending(id) {
+            const input = document.getElementById(`edit-pending-${id}`);
+            if (!input || !input.value.trim()) return;
+            const item = pendingActions.find(p => p.id === id);
+            if (item) {
+                item.title = input.value.trim();
+                savePendings();
+                editingPendingId = null;
+                renderPendingsList();
+                showToast('Acción pendiente actualizada');
+            }
+        }
+
+        function deletePending(id) {
+            pendingActions = pendingActions.filter(p => p.id !== id);
+            savePendings();
+            renderPendingsList();
+            showToast('Acción pendiente eliminada');
+        }
+
+        function clearCompletedPendings() {
+            const completedCount = pendingActions.filter(p => p.done).length;
+            if (completedCount === 0) {
+                showToast('No hay acciones realizadas para limpiar', true);
+                return;
+            }
+            pendingActions = pendingActions.filter(p => !p.done);
+            savePendings();
+            renderPendingsList();
+            showToast(`Se limpiaron ${completedCount} acciones realizadas`);
+        }
+
+        function renderPendingsList() {
+            updateBadges();
+            const container = document.getElementById('list-pendientes');
+            if (!container) return;
+
+            if (pendingActions.length === 0) {
+                container.innerHTML = `<p style="text-align:center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem;">🎉 No tienes acciones pendientes anotadas. Usa el formulario de arriba para añadir una.</p>`;
+                return;
+            }
+
+            container.innerHTML = pendingActions.map(item => {
+                if (editingPendingId === item.id) {
+                    return `
+                        <div class="task-item" style="flex-wrap: wrap;">
+                            <input type="text" id="edit-pending-${item.id}" value="${escapeHtml(item.title)}" class="input-text">
+                            <div class="task-actions">
+                                <button onclick="saveEditPending('${item.id}')" class="btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.75rem;">Guardar</button>
+                                <button onclick="cancelEditPending()" class="btn-small">Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="task-item ${item.done ? 'status-si' : ''}">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; flex: 1; cursor: pointer; min-width: 0;">
+                            <input type="checkbox" ${item.done ? 'checked' : ''} onchange="togglePendingDone('${item.id}')" style="width: 1.2rem; height: 1.2rem; accent-color: var(--emerald); cursor: pointer; flex-shrink: 0;">
+                            <div class="task-info">
+                                <p class="task-title" style="${item.done ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">${escapeHtml(item.title)}</p>
+                                <span class="task-time">${item.done ? '✓ Sí, realizada' : '⏳ Pendiente'} ${item.createdAt ? '· Anotada: ' + escapeHtml(item.createdAt) : ''}</span>
+                            </div>
+                        </label>
+                        <div class="task-actions">
+                            <button onclick="startEditPending('${item.id}')" class="btn-small" title="Modificar">✏️</button>
+                            <button onclick="deletePending('${item.id}')" class="btn-small" style="color: var(--rose-dark);" title="Eliminar">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- GESTIÓN DE LISTA DE COMPRAS ---
+        function handleAddShopping(event) {
+            event.preventDefault();
+            const titleInput = document.getElementById('input-shopping-title');
+            const qtyInput = document.getElementById('input-shopping-qty');
+            if (!titleInput) return;
+            const title = titleInput.value.trim();
+            if (!title) return;
+
+            shoppingList.unshift({
+                id: 'shop-' + Date.now(),
+                title,
+                qty: qtyInput ? qtyInput.value.trim() : '',
+                done: false,
+                createdAt: formatHumanDate(getLocalTodayStr())
+            });
+            saveShopping();
+            titleInput.value = '';
+            if (qtyInput) qtyInput.value = '';
+            renderShoppingList();
+            showToast('Artículo añadido a la lista de compras');
+        }
+
+        function toggleShoppingDone(id) {
+            const item = shoppingList.find(s => s.id === id);
+            if (!item) return;
+            item.done = !item.done;
+            saveShopping();
+            renderShoppingList();
+            showToast(item.done ? 'Marcado como comprado' : 'Marcado como pendiente de compra');
+        }
+
+        function startEditShopping(id) {
+            editingShoppingId = id;
+            renderShoppingList();
+        }
+
+        function cancelEditShopping() {
+            editingShoppingId = null;
+            renderShoppingList();
+        }
+
+        function saveEditShopping(id) {
+            const titleEl = document.getElementById(`edit-shop-title-${id}`);
+            const qtyEl = document.getElementById(`edit-shop-qty-${id}`);
+            if (!titleEl || !titleEl.value.trim()) return;
+            const item = shoppingList.find(s => s.id === id);
+            if (item) {
+                item.title = titleEl.value.trim();
+                item.qty = qtyEl ? qtyEl.value.trim() : '';
+                saveShopping();
+                editingShoppingId = null;
+                renderShoppingList();
+                showToast('Artículo actualizado');
+            }
+        }
+
+        function deleteShopping(id) {
+            shoppingList = shoppingList.filter(s => s.id !== id);
+            saveShopping();
+            renderShoppingList();
+            showToast('Artículo eliminado de la lista');
+        }
+
+        function clearCompletedShopping() {
+            const completedCount = shoppingList.filter(s => s.done).length;
+            if (completedCount === 0) {
+                showToast('No hay artículos comprados para limpiar', true);
+                return;
+            }
+            shoppingList = shoppingList.filter(s => !s.done);
+            saveShopping();
+            renderShoppingList();
+            showToast(`Se limpiaron ${completedCount} artículos ya comprados`);
+        }
+
+        function renderShoppingList() {
+            updateBadges();
+            const container = document.getElementById('list-compras');
+            if (!container) return;
+
+            if (shoppingList.length === 0) {
+                container.innerHTML = `<p style="text-align:center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem;">🛒 Tu lista de compras está vacía. Añade productos arriba.</p>`;
+                return;
+            }
+
+            container.innerHTML = shoppingList.map(item => {
+                if (editingShoppingId === item.id) {
+                    return `
+                        <div class="task-item" style="flex-wrap: wrap;">
+                            <input type="text" id="edit-shop-title-${item.id}" value="${escapeHtml(item.title)}" class="input-text" placeholder="Producto">
+                            <input type="text" id="edit-shop-qty-${item.id}" value="${escapeHtml(item.qty || '')}" class="input-time" placeholder="Cantidad / Nota">
+                            <div class="task-actions">
+                                <button onclick="saveEditShopping('${item.id}')" class="btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.75rem;">Guardar</button>
+                                <button onclick="cancelEditShopping()" class="btn-small">Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="task-item ${item.done ? 'status-si' : ''}">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; flex: 1; cursor: pointer; min-width: 0;">
+                            <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleShoppingDone('${item.id}')" style="width: 1.2rem; height: 1.2rem; accent-color: var(--emerald); cursor: pointer; flex-shrink: 0;">
+                            <div class="task-info">
+                                <p class="task-title" style="${item.done ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">${escapeHtml(item.title)} ${item.qty ? `<span style="font-weight: 500; color: var(--primary);">(${escapeHtml(item.qty)})</span>` : ''}</p>
+                                <span class="task-time">${item.done ? '✓ Comprado' : '🛒 Por comprar'}</span>
+                            </div>
+                        </label>
+                        <div class="task-actions">
+                            <button onclick="startEditShopping('${item.id}')" class="btn-small" title="Modificar">✏️</button>
+                            <button onclick="deleteShopping('${item.id}')" class="btn-small" style="color: var(--rose-dark);" title="Eliminar">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function changeSelectedDate(offsetDays) {
+            const [y, m, d] = selectedDateStr.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            dateObj.setDate(dateObj.getDate() + offsetDays);
+            selectedDateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+            editingActivityId = null;
+            refreshActiveViews();
+        }
+
+        function onDatePickerChange(val) {
+            if (!val) return;
+            selectedDateStr = val;
+            editingActivityId = null;
+            refreshActiveViews();
+        }
+
+        function goToToday() {
+            selectedDateStr = getLocalTodayStr();
+            editingActivityId = null;
+            refreshActiveViews();
+            showToast('Mostrando el día de hoy');
+        }
+
+        function updateBadges() {
+            const dayActs = getDayActivities(selectedDateStr);
+            document.getElementById('badge-escolares').textContent = dayActs.filter(a => a.category === 'escolar').length;
+            document.getElementById('badge-cotidianas').textContent = dayActs.filter(a => a.category === 'cotidiana').length;
+            const uncompletedPendings = pendingActions.filter(p => !p.done).length;
+            const badgePend = document.getElementById('badge-pendientes');
+            if (badgePend) badgePend.textContent = uncompletedPendings;
+            const counterDisplay = document.getElementById('pending-counter-display');
+            if (counterDisplay) counterDisplay.textContent = uncompletedPendings;
+
+            const uncompletedShopping = shoppingList.filter(s => !s.done).length;
+            const badgeShop = document.getElementById('badge-compras');
+            if (badgeShop) badgeShop.textContent = uncompletedShopping;
+            const shopCounterDisplay = document.getElementById('shopping-counter-display');
+            if (shopCounterDisplay) shopCounterDisplay.textContent = uncompletedShopping;
+
+            const visibleResources = resourcesList.filter(r => r.scope === 'general' || r.dateStr === selectedDateStr).length;
+            const badgeRes = document.getElementById('badge-recursos');
+            if (badgeRes) badgeRes.textContent = visibleResources;
+        }
+        // --- UTILIDADES PARA YOUTUBE, URLs DE APLICACIONES Y ARCHIVOS (PDF, DOCX, VÍDEO) ---
+        function extractYouTubeId(url) {
+            if (!url) return null;
+            const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function normalizeUrl(rawUrl) {
+            const trimmed = (rawUrl || '').trim();
+            if (!trimmed) return '';
+            // Permitir protocolos de aplicaciones instaladas (ej: vnd.youtube://, whatsapp://, ms-word:, etc.) o http/https
+            if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) {
+                return trimmed;
+            }
+            return 'https://' + trimmed;
+        }
+
+        function openInYouTubeApp(url) {
+            const ytId = extractYouTubeId(url);
+            if (!ytId) {
+                window.open(normalizeUrl(url), '_blank', 'noopener');
+                return;
+            }
+            // Intenta abrir en la App de YouTube en Móvil/Tablet o cae a la web
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                window.location.href = `vnd.youtube://${ytId}`;
+                setTimeout(() => {
+                    window.open(`https://www.youtube.com/watch?v=${ytId}`, '_blank', 'noopener');
+                }, 700);
+            } else {
+                window.open(`https://www.youtube.com/watch?v=${ytId}`, '_blank', 'noopener');
+            }
+        }
+
+        function openYouTubeEmbed(url, title = 'Vídeo de YouTube') {
+            const ytId = extractYouTubeId(url);
+            if (!ytId) {
+                window.open(normalizeUrl(url), '_blank', 'noopener');
+                return;
+            }
+            const card = document.getElementById('media-viewer-card');
+            const body = document.getElementById('media-viewer-body');
+            const titleEl = document.getElementById('media-viewer-title');
+            titleEl.textContent = `▶️ ${title}`;
+            body.innerHTML = `
+                <iframe style="width: 100%; height: 420px; border: none;" 
+                    src="https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            `;
+            card.classList.remove('hidden');
+            card.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function openStoredFile(fileId, mode = 'view') {
+            try {
+                const record = await getFileFromIDB(fileId);
+                if (!record || !record.blob) {
+                    showToast('El archivo físico solo está en el dispositivo donde se subió', true);
+                    return;
+                }
+                if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+                currentObjectUrl = URL.createObjectURL(record.blob);
+
+                const mime = (record.mimeType || '').toLowerCase();
+                const name = record.fileName || 'archivo';
+                const isPdf = mime.includes('pdf') || name.toLowerCase().endsWith('.pdf');
+                const isVideo = mime.startsWith('video/');
+                const isAudio = mime.startsWith('audio/');
+                const isImage = mime.startsWith('image/');
+
+                // Para DOCX, Excel, PowerPoint o modo descarga: el navegador lo descarga/abre con Word o la App instalada
+                if (mode === 'download' || (!isPdf && !isVideo && !isAudio && !isImage)) {
+                    const a = document.createElement('a');
+                    a.href = currentObjectUrl;
+                    a.download = name;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    showToast(`Abriendo "${name}" con la aplicación de tu dispositivo`);
+                    return;
+                }
+
+                // Si estamos en otra pestaña y queremos ver el PDF o Vídeo en una pestaña nueva del navegador:
+                if (mode === 'newtab') {
+                    window.open(currentObjectUrl, '_blank');
+                    return;
+                }
+
+                // Mostrar en el visor integrado
+                switchTab('recursos');
+                const card = document.getElementById('media-viewer-card');
+                const body = document.getElementById('media-viewer-body');
+                const titleEl = document.getElementById('media-viewer-title');
+                titleEl.textContent = `📄 ${name}`;
+
+                if (isPdf) {
+                    body.innerHTML = `<iframe src="${currentObjectUrl}" style="width: 100%; height: 500px; border: none; background: white;"></iframe>`;
+                } else if (isVideo) {
+                    body.innerHTML = `<video src="${currentObjectUrl}" controls autoplay style="max-width: 100%; max-height: 460px;"></video>`;
+                } else if (isAudio) {
+                    body.innerHTML = `<div style="padding: 2rem; width: 100%; text-align: center;"><audio src="${currentObjectUrl}" controls autoplay style="width: 80%;"></audio></div>`;
+                } else if (isImage) {
+                    body.innerHTML = `<img src="${currentObjectUrl}" style="max-width: 100%; max-height: 480px; object-fit: contain;" alt="${escapeHtml(name)}">`;
+                }
+                card.classList.remove('hidden');
+                card.scrollIntoView({ behavior: 'smooth' });
+            } catch (e) {
+                showToast('No se pudo abrir el archivo adjunto', true);
+            }
+        }
+
+        function closeMediaViewer() {
+            const card = document.getElementById('media-viewer-card');
+            const body = document.getElementById('media-viewer-body');
+            if (body) body.innerHTML = '';
+            if (card) card.classList.add('hidden');
+        }
+
+        function renderAttachmentBadges(item) {
+            let html = '';
+            if (item.url) {
+                const ytId = extractYouTubeId(item.url);
+                const safeUrl = escapeHtml(normalizeUrl(item.url));
+                if (ytId) {
+                    html += `
+                        <div style="display: inline-flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem;">
+                            <button type="button" onclick="switchTab('recursos'); openYouTubeEmbed('${safeUrl}', '${escapeHtml(item.title)}')" class="btn-small" style="padding: 0.2rem 0.55rem; font-size: 0.7rem; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">
+                                ▶️ Ver YouTube aquí
+                            </button>
+                            <button type="button" onclick="openInYouTubeApp('${safeUrl}')" class="btn-small" style="padding: 0.2rem 0.55rem; font-size: 0.7rem; background: #fff1f2; color: #9f1239; border-color: #fecdd3;" title="Abrir en la aplicación YouTube o navegador">
+                                📲 Abrir en App YouTube
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div style="display: inline-flex; gap: 0.35rem; margin-top: 0.35rem;">
+                            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="btn-small" style="text-decoration: none; padding: 0.2rem 0.55rem; font-size: 0.7rem; background: #e0f2fe; color: #0369a1; border-color: #bae6fd;">
+                                🔗 Abrir Enlace / App
+                            </a>
+                        </div>
+                    `;
+                }
+            }
+
+            if (item.fileId) {
+                const name = item.fileName || 'Documento';
+                const lower = name.toLowerCase();
+                const isDocxOrOffice = lower.endsWith('.doc') || lower.endsWith('.docx') || lower.endsWith('.xls') || lower.endsWith('.xlsx') || lower.endsWith('.ppt') || lower.endsWith('.pptx');
+                const icon = lower.endsWith('.pdf') ? '📕 PDF' : (isDocxOrOffice ? '📘 Word/Office' : '📎 Archivo');
+
+                html += `
+                    <div style="display: inline-flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem;">
+                        ${!isDocxOrOffice ? `
+                            <button type="button" onclick="openStoredFile('${item.fileId}', 'view')" class="btn-small" style="padding: 0.2rem 0.55rem; font-size: 0.7rem; background: #fef3c7; color: #92400e; border-color: #fde68a;">
+                                👁️ Ver ${icon}: ${escapeHtml(name)}
+                            </button>
+                            <button type="button" onclick="openStoredFile('${item.fileId}', 'newtab')" class="btn-small" style="padding: 0.2rem 0.55rem; font-size: 0.7rem;">
+                                ↗️ Pestaña nueva
+                            </button>
+                        ` : ''}
+                        <button type="button" onclick="openStoredFile('${item.fileId}', 'download')" class="btn-small" style="padding: 0.2rem 0.55rem; font-size: 0.7rem; background: #dbeafe; color: #1e40af; border-color: #93c5fd;">
+                            💻 Abrir con App instalada (${escapeHtml(name)})
+                        </button>
+                    </div>
+                `;
+            }
+            return html;
+        }
+
+        // --- GESTIÓN DE LA PESTAÑA DE ARCHIVOS Y VÍDEOS (BIBLIOTECA) ---
+        async function handleAddFileResource(event) {
+            event.preventDefault();
+            const titleInput = document.getElementById('res-file-title');
+            const fileInput = document.getElementById('res-file-input');
+            const scopeSelect = document.getElementById('res-file-scope');
+
+            const title = titleInput.value.trim();
+            const file = fileInput.files && fileInput.files[0];
+            if (!title || !file) return;
+
+            const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+            try {
+                await saveFileToIDB(fileId, file, file.name, file.type || 'application/octet-stream');
+                resourcesList.unshift({
+                    id: 'res-' + Date.now(),
+                    title,
+                    type: 'file',
+                    fileId,
+                    fileName: file.name,
+                    fileType: file.type || '',
+                    scope: scopeSelect.value,
+                    dateStr: selectedDateStr,
+                    createdAt: formatHumanDate(getLocalTodayStr())
+                });
+                saveResources();
+                titleInput.value = '';
+                fileInput.value = '';
+                document.getElementById('res-file-input-label').textContent = 'Seleccionar archivo (PDF, DOCX, MP4...)';
+                renderResourcesList();
+                showToast('Archivo guardado en el programa');
+            } catch (e) {
+                showToast('Error al guardar el archivo en el navegador', true);
+            }
+        }
+
+        function handleAddUrlResource(event) {
+            event.preventDefault();
+            const titleInput = document.getElementById('res-url-title');
+            const urlInput = document.getElementById('res-url-input');
+            const scopeSelect = document.getElementById('res-url-scope');
+
+            const title = titleInput.value.trim();
+            const url = urlInput.value.trim();
+            if (!title || !url) return;
+
+            resourcesList.unshift({
+                id: 'res-' + Date.now(),
+                title,
+                type: 'url',
+                url,
+                scope: scopeSelect.value,
+                dateStr: selectedDateStr,
+                createdAt: formatHumanDate(getLocalTodayStr())
+            });
+            saveResources();
+            titleInput.value = '';
+            urlInput.value = '';
+            renderResourcesList();
+            showToast('Enlace / Vídeo guardado correctamente');
+        }
+
+        function setResourceFilter(filter) {
+            resourceFilter = filter;
+            ['all', 'day', 'general'].forEach(f => {
+                const btn = document.getElementById(`btn-filter-${f}`);
+                if (!btn) return;
+                if (f === filter) {
+                    btn.style.background = 'var(--primary)';
+                    btn.style.color = 'white';
+                } else {
+                    btn.style.background = '#f8fafc';
+                    btn.style.color = 'var(--text)';
+                }
+            });
+            renderResourcesList();
+        }
+
+        async function deleteResource(id) {
+            const item = resourcesList.find(r => r.id === id);
+            if (!item) return;
+            if (item.fileId) {
+                await deleteFileFromIDB(item.fileId);
+            }
+            resourcesList = resourcesList.filter(r => r.id !== id);
+            saveResources();
+            renderResourcesList();
+            showToast('Recurso eliminado');
+        }
+
+        function renderResourcesList() {
+            updateBadges();
+            const container = document.getElementById('list-recursos');
+            if (!container) return;
+
+            const filtered = resourcesList.filter(r => {
+                if (resourceFilter === 'day') return r.scope === 'day' && r.dateStr === selectedDateStr;
+                if (resourceFilter === 'general') return r.scope === 'general';
+                return r.scope === 'general' || r.dateStr === selectedDateStr;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<p style="text-align:center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem;">📂 No hay documentos PDF, DOCX ni vídeos guardados para este filtro.</p>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => {
+                const scopeBadge = item.scope === 'general'
+                    ? `<span style="font-size: 0.68rem; background: #e0e7ff; color: #4338ca; padding: 0.1rem 0.45rem; border-radius: 999px; font-weight: 700;">📌 Biblioteca General</span>`
+                    : `<span style="font-size: 0.68rem; background: #fef3c7; color: #b45309; padding: 0.1rem 0.45rem; border-radius: 999px; font-weight: 700;">📅 Día ${escapeHtml(item.dateStr)}</span>`;
+
+                return `
+                    <div class="task-item" style="flex-wrap: wrap;">
+                        <div class="task-info">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <p class="task-title">${escapeHtml(item.title)}</p>
+                                ${scopeBadge}
+                            </div>
+                            ${renderAttachmentBadges(item)}
+                        </div>
+                        <div class="task-actions">
+                            <button onclick="deleteResource('${item.id}')" class="btn-small" style="color: var(--rose-dark);" title="Borrar recurso">🗑️ Borrar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Añadir actividad rápida desde la pestaña Cumplir Actividades (con soporte de URL y Archivo)
+        async function handleQuickAddActivity(event, category) {
+            event.preventDefault();
+            const titleInput = document.getElementById(`quick-${category}-title`);
+            const timeInput = document.getElementById(`quick-${category}-time`);
+            const urlInput = document.getElementById(`quick-${category}-url`);
+            const fileInput = document.getElementById(`quick-${category}-file`);
+            const title = titleInput.value.trim();
+            if (!title) return;
+
+            let fileId = null, fileName = '', fileType = '';
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                const f = fileInput.files[0];
+                fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+                fileName = f.name;
+                fileType = f.type || '';
+                try {
+                    await saveFileToIDB(fileId, f, fileName, fileType);
+                } catch (e) {}
+            }
+
+            const dayActs = getDayActivities(selectedDateStr);
+            dayActs.push({
+                id: 'act-' + Date.now(),
+                title,
+                category,
+                time: timeInput ? timeInput.value.trim() : '',
+                url: urlInput ? urlInput.value.trim() : '',
+                fileId,
+                fileName,
+                fileType
+            });
+            saveActivities();
+            titleInput.value = '';
+            if (timeInput) timeInput.value = '';
+            if (urlInput) urlInput.value = '';
+            if (fileInput) {
+                fileInput.value = '';
+                updateFileLabel(`quick-${category}-file`, `quick-${category}-file-label`);
+            }
+            renderChecklistAndSummary();
+            renderCalendar();
+            showToast(`Añadida al día ${selectedDateStr}`);
+        }
+
+        async function handleAddActivity(event, category) {
+            event.preventDefault();
+            const titleInput = document.getElementById(`input-${category}-title`);
+            const timeInput = document.getElementById(`input-${category}-time`);
+            const urlInput = document.getElementById(`input-${category}-url`);
+            const fileInput = document.getElementById(`input-${category}-file`);
+            const title = titleInput.value.trim();
+            if (!title) return;
+
+            let fileId = null, fileName = '', fileType = '';
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                const f = fileInput.files[0];
+                fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+                fileName = f.name;
+                fileType = f.type || '';
+                try {
+                    await saveFileToIDB(fileId, f, fileName, fileType);
+                } catch (e) {}
+            }
+
+            const dayActs = getDayActivities(selectedDateStr);
+            dayActs.push({
+                id: 'act-' + Date.now(),
+                title,
+                category,
+                time: timeInput.value.trim(),
+                url: urlInput ? urlInput.value.trim() : '',
+                fileId,
+                fileName,
+                fileType
+            });
+            saveActivities();
+            titleInput.value = '';
+            timeInput.value = '';
+            if (urlInput) urlInput.value = '';
+            if (fileInput) {
+                fileInput.value = '';
+                document.getElementById(`input-${category}-file-label`).textContent = 'Subir PDF / DOCX / Vídeo del PC o Móvil';
+            }
+            renderCrudList(category);
+            renderChecklistAndSummary();
+            renderCalendar();
+            showToast(`Actividad añadida al día ${selectedDateStr}`);
+        }
+
+        function renderCrudList(category) {
+            const container = document.getElementById(category === 'escolar' ? 'crud-list-escolares' : 'crud-list-cotidianas');
+            if (!container) return;
+            const dayActs = getDayActivities(selectedDateStr);
+            const filtered = dayActs.filter(a => a.category === category);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<p style="text-align:center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem;">No hay actividades registradas para esta fecha (${selectedDateStr}).</p>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(act => {
+                if (editingActivityId === act.id) {
+                    return `
+                        <div class="task-item" style="flex-wrap: wrap;">
+                            <input type="text" id="edit-title-${act.id}" value="${escapeHtml(act.title)}" class="input-text" placeholder="Título">
+                            <input type="time" id="edit-time-${act.id}" value="${act.time || ''}" class="input-time">
+                            <input type="text" id="edit-url-${act.id}" value="${escapeHtml(act.url || '')}" class="input-text" placeholder="🔗 URL YouTube / Web">
+                            <div class="task-actions">
+                                <button onclick="saveEditActivity('${act.id}', '${category}')" class="btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.75rem;">Guardar</button>
+                                <button onclick="cancelEditActivity('${category}')" class="btn-small">Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                return `
+                    <div class="task-item">
+                        <div class="task-info">
+                            <p class="task-title">${escapeHtml(act.title)}</p>
+                            ${act.time ? `<span class="task-time">🕒 ${act.time}</span>` : ''}
+                            <div>${renderAttachmentBadges(act)}</div>
+                        </div>
+                        <div class="task-actions">
+                            <button onclick="startEditActivity('${act.id}', '${category}')" class="btn-small" title="Modificar">✏️ Editar</button>
+                            <button onclick="confirmDeleteActivity('${act.id}', '${category}')" class="btn-small" style="color: var(--rose-dark);" title="Eliminar de este día">🗑️ Borrar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function startEditActivity(id, category) { editingActivityId = id; renderCrudList(category); }
+        function cancelEditActivity(category) { editingActivityId = null; renderCrudList(category); }
+
+        function saveEditActivity(id, category) {
+            const titleEl = document.getElementById(`edit-title-${id}`);
+            const timeEl = document.getElementById(`edit-time-${id}`);
+            const urlEl = document.getElementById(`edit-url-${id}`);
+            if (!titleEl || !titleEl.value.trim()) return;
+
+            const dayActs = getDayActivities(selectedDateStr);
+            const idx = dayActs.findIndex(a => a.id === id);
+            if (idx !== -1) {
+                dayActs[idx].title = titleEl.value.trim();
+                dayActs[idx].time = timeEl ? timeEl.value.trim() : '';
+                if (urlEl) dayActs[idx].url = urlEl.value.trim();
+                saveActivities();
+                editingActivityId = null;
+                renderCrudList(category);
+                renderChecklistAndSummary();
+                showToast('Actividad actualizada en este día');
+            }
+        }
+
+        function confirmDeleteActivity(id, category) {
+            const dayActs = getDayActivities(selectedDateStr);
+            const act = dayActs.find(a => a.id === id);
+            if (!act) return;
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('modal-desc').textContent = `Se eliminará "${act.title}" únicamente del día ${selectedDateStr}.`;
+            document.getElementById('modal-confirm-btn').onclick = async () => {
+                if (act.fileId) {
+                    await deleteFileFromIDB(act.fileId);
+                }
+                activitiesByDate[selectedDateStr] = getDayActivities(selectedDateStr).filter(a => a.id !== id);
+                if (dailyLogs[selectedDateStr]) {
+                    delete dailyLogs[selectedDateStr][id];
+                    saveLogs();
+                }
+                saveActivities();
+                renderCrudList(category);
+                renderChecklistAndSummary();
+                renderCalendar();
+                closeModal();
+                showToast('Actividad eliminada de este día');
+            };
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        function setActivityStatus(activityId, status) {
+            if (!dailyLogs[selectedDateStr]) dailyLogs[selectedDateStr] = {};
+            if (dailyLogs[selectedDateStr][activityId] === status) {
+                delete dailyLogs[selectedDateStr][activityId];
+            } else {
+                dailyLogs[selectedDateStr][activityId] = status;
+            }
+            saveLogs();
+            renderChecklistAndSummary();
+            renderCalendar();
+        }
+
+        function markAllDay(status) {
+            const dayActs = getDayActivities(selectedDateStr);
+            if (dayActs.length === 0) {
+                showToast('No hay actividades en este día', true);
+                return;
+            }
+            if (!dailyLogs[selectedDateStr]) dailyLogs[selectedDateStr] = {};
+            dayActs.forEach(a => dailyLogs[selectedDateStr][a.id] = status);
+            saveLogs();
+            renderChecklistAndSummary();
+            renderCalendar();
+            showToast('Todas las de este día marcadas con SÍ');
+        }
+
+        function resetDay() {
+            delete dailyLogs[selectedDateStr];
+            saveLogs();
+            renderChecklistAndSummary();
+            renderCalendar();
+            showToast('Respuestas del día reiniciadas');
+        }
+
+        function renderChecklistColumn(category, containerId) {
+            const container = document.getElementById(containerId);
+            const dayActs = getDayActivities(selectedDateStr);
+            const list = dayActs.filter(a => a.category === category);
+            const dayLog = dailyLogs[selectedDateStr] || {};
+
+            if (list.length === 0) {
+                container.innerHTML = `<p style="text-align:center; padding: 1rem; color: var(--text-muted); font-size: 0.8rem;">No hay actividades para esta fecha. Añádelas arriba.</p>`;
+                return;
+            }
+
+            container.innerHTML = list.map(act => {
+                const st = dayLog[act.id];
+                const itemCls = st === 'si' ? 'status-si' : (st === 'no' ? 'status-no' : '');
+                return `
+                    <div class="task-item ${itemCls}">
+                        <div class="task-info">
+                            <p class="task-title">${escapeHtml(act.title)}</p>
+                            ${act.time ? `<span class="task-time">🕒 ${act.time}</span>` : ''}
+                            <div>${renderAttachmentBadges(act)}</div>
+                        </div>
+                        <div class="task-actions">
+                            <button onclick="setActivityStatus('${act.id}', 'si')" class="btn-status ${st === 'si' ? 'yes-active' : ''}">✓ SÍ</button>
+                            <button onclick="setActivityStatus('${act.id}', 'no')" class="btn-status ${st === 'no' ? 'no-active' : ''}">✕ NO</button>
+                            <button onclick="confirmDeleteActivity('${act.id}', '${category}')" class="btn-small" style="padding: 0.35rem 0.5rem; color: var(--rose-dark);" title="Borrar tarea de este día">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderChecklistAndSummary() {
+            renderChecklistColumn('escolar', 'checklist-escolares');
+            renderChecklistColumn('cotidiana', 'checklist-cotidianas');
+            updateSummaryAndChart();
+        }
+
+        function updateSummaryAndChart() {
+            const dayActs = getDayActivities(selectedDateStr);
+            const dayLog = dailyLogs[selectedDateStr] || {};
+            const total = dayActs.length;
+            let yesList = [], noList = [], pendingCount = 0;
+
+            dayActs.forEach(act => {
+                const st = dayLog[act.id];
+                if (st === 'si') yesList.push(act);
+                else if (st === 'no') noList.push(act);
+                else pendingCount++;
+            });
+
+            const yesPct = total > 0 ? Math.round((yesList.length / total) * 100) : 0;
+            const noPct = total > 0 ? Math.round((noList.length / total) * 100) : 0;
+            const pendingPct = total > 0 ? Math.max(0, 100 - yesPct - noPct) : 0;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-yes').textContent = yesList.length;
+            document.getElementById('stat-yes-pct').textContent = `(${yesPct}%)`;
+            document.getElementById('stat-no').textContent = noList.length;
+            document.getElementById('stat-no-pct').textContent = `(${noPct}%)`;
+            document.getElementById('stat-pending').textContent = pendingCount;
+            document.getElementById('stat-pending-pct').textContent = `(${pendingPct}%)`;
+
+            const donutYes = document.getElementById('donut-yes');
+            const donutNo = document.getElementById('donut-no');
+            donutYes.setAttribute('stroke-dasharray', `${yesPct} ${100 - yesPct}`);
+            donutYes.setAttribute('stroke-dashoffset', '0');
+            donutNo.setAttribute('stroke-dasharray', `${noPct} ${100 - noPct}`);
+            donutNo.setAttribute('stroke-dashoffset', `${-yesPct}`);
+
+            document.getElementById('donut-center-pct').textContent = `${yesPct}%`;
+            document.getElementById('legend-yes').textContent = `${yesPct}%`;
+            document.getElementById('legend-no').textContent = `${noPct}%`;
+            document.getElementById('legend-pending').textContent = `${pendingPct}%`;
+
+            const escAll = dayActs.filter(a => a.category === 'escolar');
+            const escYes = escAll.filter(a => dayLog[a.id] === 'si').length;
+            const escNo = escAll.filter(a => dayLog[a.id] === 'no').length;
+            const escYesPct = escAll.length > 0 ? Math.round((escYes / escAll.length) * 100) : 0;
+            const escNoPct = escAll.length > 0 ? Math.round((escNo / escAll.length) * 100) : 0;
+            document.getElementById('bar-escolares-label').textContent = `${escYesPct}% (${escYes}/${escAll.length})`;
+            document.getElementById('bar-escolares-yes').style.width = `${escYesPct}%`;
+            document.getElementById('bar-escolares-no').style.width = `${escNoPct}%`;
+
+            const cotAll = dayActs.filter(a => a.category === 'cotidiana');
+            const cotYes = cotAll.filter(a => dayLog[a.id] === 'si').length;
+            const cotNo = cotAll.filter(a => dayLog[a.id] === 'no').length;
+            const cotYesPct = cotAll.length > 0 ? Math.round((cotYes / cotAll.length) * 100) : 0;
+            const cotNoPct = cotAll.length > 0 ? Math.round((cotNo / cotAll.length) * 100) : 0;
+            document.getElementById('bar-cotidianas-label').textContent = `${cotYesPct}% (${cotYes}/${cotAll.length})`;
+            document.getElementById('bar-cotidianas-yes').style.width = `${cotYesPct}%`;
+            document.getElementById('bar-cotidianas-no').style.width = `${cotNoPct}%`;
+
+            document.getElementById('summary-list-yes').innerHTML = yesList.length
+                ? yesList.map(a => `<li>✓ ${escapeHtml(a.title)}</li>`).join('')
+                : `<li style="opacity:0.6;font-style:italic;">Ninguna marcada con SÍ.</li>`;
+
+            document.getElementById('summary-list-no').innerHTML = noList.length
+                ? noList.map(a => `<li>✕ ${escapeHtml(a.title)}</li>`).join('')
+                : `<li style="opacity:0.6;font-style:italic;">Ninguna marcada con NO.</li>`;
+        }
+
+        function scrollToSummary() {
+            document.getElementById('resumen-dia-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function changeCalendarMonth(offset) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
+            renderCalendar();
+        }
+
+        function changeCalendarYear(offset) {
+            currentCalendarDate.setFullYear(currentCalendarDate.getFullYear() + offset);
+            renderCalendar();
+        }
+
+        function resetCalendarToCurrentMonth() {
+            currentCalendarDate = new Date();
+            renderCalendar();
+        }
+
+        function selectDateFromCalendar(dateStr) {
+            selectedDateStr = dateStr;
+            editingActivityId = null;
+            refreshActiveViews();
+            switchTab('cumplir');
+            showToast(`Día ${dateStr} abierto`);
+        }
+
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            document.getElementById('calendar-month-title').textContent = currentCalendarDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const startOffset = (firstDay + 6) % 7;
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayStr = getLocalTodayStr();
+
+            let html = '';
+            for (let i = 0; i < startOffset; i++) {
+                html += `<div style="height: 5.2rem; border-radius: 0.75rem; background: #f1f5f9; opacity: 0.5;"></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = dateStr === todayStr;
+                const isSelected = dateStr === selectedDateStr;
+                const dayActs = activitiesByDate[dateStr] || [];
+                const totalActs = dayActs.length;
+                const dayLog = dailyLogs[dateStr] || {};
+                const answered = dayActs.filter(a => dayLog[a.id] === 'si' || dayLog[a.id] === 'no');
+
+                let badge = '';
+                if (totalActs > 0) {
+                    if (answered.length > 0) {
+                        const yesCount = dayActs.filter(a => dayLog[a.id] === 'si').length;
+                        const pct = Math.round((yesCount / totalActs) * 100);
+                        let bg = '#ffe4e6', col = '#be123c';
+                        if (pct >= 75) { bg = '#d1fae5'; col = '#047857'; }
+                        else if (pct >= 40) { bg = '#fef3c7'; col = '#b45309'; }
+                        badge = `<span class="cal-pct-badge" style="background:${bg};color:${col};">${pct}% (${totalActs})</span>`;
+                    } else {
+                        badge = `<span class="cal-pct-badge" style="background:#e0e7ff;color:#4338ca;">${totalActs} tar.</span>`;
+                    }
+                }
+
+                html += `
+                    <button onclick="selectDateFromCalendar('${dateStr}')" class="cal-cell ${isSelected ? 'selected' : ''}">
+                        <span class="cal-day-num ${isToday ? 'today' : ''}">${day}</span>
+                        ${badge}
+                    </button>
+                `;
+            }
+            document.getElementById('calendar-grid').innerHTML = html;
+        }
+
+        // Funciones de Copia de Seguridad (Exportar / Importar)
+        function exportBackup() {
+            const data = { activitiesByDate, dailyLogs, pendingActions, shoppingList, resourcesList, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `copia_control_diario_${getLocalTodayStr()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Copia de seguridad descargada');
+        }
+
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (typeof parsed.dailyLogs === 'object') {
+                        activitiesByDate = parsed.activitiesByDate || {};
+                        dailyLogs = parsed.dailyLogs;
+                        pendingActions = Array.isArray(parsed.pendingActions) ? parsed.pendingActions : [];
+                        shoppingList = Array.isArray(parsed.shoppingList) ? parsed.pendingActions : [];
+                        if (Array.isArray(parsed.shoppingList)) shoppingList = parsed.shoppingList;
+                        resourcesList = Array.isArray(parsed.resourcesList) ? parsed.resourcesList : [];
+                        saveActivities();
+                        saveLogs();
+                        savePendings();
+                        saveShopping();
+                        saveResources();
+                        refreshActiveViews();
+                        renderPendingsList();
+                        renderShoppingList();
+                        renderResourcesList();
+                        showToast('Copia restaurada con éxito');
+                    } else {
+                        showToast('Archivo de copia no válido', true);
+                    }
+                } catch (err) {
+                    showToast('Error al leer el archivo', true);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+        }
+
+        let toastTimeout;
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            document.getElementById('toast-icon').textContent = isError ? '⚠️' : '✅';
+            toast.classList.remove('hidden');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => toast.classList.add('hidden'), 2500);
+        }
+
+        window.onload = function() {
+            loadData();
+            refreshActiveViews();
+        };
+    </script>
+</body>
+</html>
+```

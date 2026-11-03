@@ -1,0 +1,6 @@
+{
+  "name": "Control Diario Móvil",
+  "description": "Aplicación móvil offline para el control de actividades diarias escolares y cotidianas, lista de compras, tareas pendientes, biblioteca de recursos y asistente Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
